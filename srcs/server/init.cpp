@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:34:17 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/08 09:51:12 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/24 14:17:06 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,5 +82,4 @@ void run_server(int epoll_fd, int server_fd){
 			}
 		}
 	}
-	std::cout << "hello" << std::endl;
 }

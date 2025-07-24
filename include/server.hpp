@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:20:38 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/08 11:55:17 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/24 16:45:06 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 #define MAX_EVENTS 1024
 #define BUFFER_SIZE 4096
+#define DEBUG true
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -32,8 +33,11 @@
 #include <signal.h>
 #include <csignal>
 
+#include "class/parsing_class.hpp"
+
 //possibilite de class surtout pour le parsing / conf file
 
+class Parsing_class;
 struct ClientData {
 	int fd;
 	std::string read_buff;
@@ -62,9 +66,10 @@ void close_client(int epoll_fd, int client_fd, std::map<int, ClientData> client)
 //response.cpp
 void prepare_response(ClientData & client);
 
-//parsing
-//count_server.cpp
-int count_nginx_servers(const std::string& filename);
+//parsing/
+// parse_server.cpp
+std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, std::map<int, Parsing_class> serverMap);
 std::string trim(const std::string& str);
+int fill_server(std::string line, std::string root_str, std::string servername_str, int port);
 
 #endif // !SERVER_HPP
