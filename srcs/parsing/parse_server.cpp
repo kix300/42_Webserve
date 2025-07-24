@@ -60,11 +60,7 @@ std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, st
                 current_server.clear();
             }
         }
-        // else if (line.find('{') != std::string::npos)
-        // {
-        //     if (in_server_block)
-        //         brace_level++;
-        // }
+
         // dans les brace on regarde ce quil nous faut
         else if (line.find('}') != std::string::npos)
         {
@@ -83,6 +79,7 @@ std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, st
         {
             if (line.compare(0, 6, "listen") == 0)
             {
+                //rajouter check suplemetaire sur le port
                 std::string port_str = trim(line.substr(6));
                 std::istringstream iss(port_str);
                 int port;
@@ -93,10 +90,12 @@ std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, st
             }
             else if (line.compare(0, 11, "server_name") == 0)
             {
+                //rajouter check suplemetaire sur le nom
                 current_server.setName(trim(line.substr(11)));
             }
             else if (line.compare(0, 4, "root") == 0)
             {
+                //rajouter check suplemetaire sur le root dir
                 current_server.setRoot(trim(line.substr(4)));
             }
         }
