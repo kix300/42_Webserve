@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/08 10:40:00 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/24 16:56:00 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/24 17:11:42 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,9 @@ void Parsing_class::display(){
 void Parsing_class::setPort(int port){
     _port = port;
 }
+void Parsing_class::setFd(int fd){
+    _server_fd= fd;
+}
 void Parsing_class::setRoot(std::string root){
     _root = root;
 }
@@ -35,6 +38,9 @@ void Parsing_class::setName(std::string name){
 
 int Parsing_class::getPort(){
     return _port;
+}
+int Parsing_class::getFd(){
+    return _server_fd;
 }
 std::string Parsing_class::getRoot(){
     return _root;

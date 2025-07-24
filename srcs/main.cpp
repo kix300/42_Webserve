@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:22:53 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/24 17:05:40 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/24 17:11:59by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,17 +33,18 @@ int main(int ac, char **av)
 		std::signal(SIGTERM, signalHandler);
 
 		// ici parsing
-		const int port = 8080;
+		// const int port = 8080;
 
 		serverMap = count_nginx_servers(av[1], serverMap);
 		serverMap[1].display();
 		serverMap[2].display();
 		// en fonction du nombre de server nous devront avoir obligatoirement plusieurs socket et peuteter plusieurs epoll je sais pas encore
-		int server_fd = create_server_socket(port);
+		serverMap[1].setFd(create_server_socket(serverMap[1].getPort()));
 		// revoir le setup d'epoll pour plusieurs server
+		int server_fd = serverMap[1].getFd();
 		int epoll_fd = setup_epoll(server_fd);
 
-		std::cout << "listen on http://localhost:8080" << std::endl;
+		std::cout << "listen on http://localhost:" << serverMap[1].getPort() << std::endl;
 		run_server(epoll_fd, server_fd);
 
 		close(server_fd);

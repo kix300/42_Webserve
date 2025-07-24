@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/08 10:39:44 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/24 16:55:10 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/24 17:11:09 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ class Parsing_class {
         int _port;
         std::string _root;
         std::string _name;
+        int _server_fd;
         //map de location
         //liste index
 
@@ -38,10 +39,12 @@ class Parsing_class {
         void setPort(int port);
         void setRoot(std::string root);
         void setName(std::string name);
+        void setFd(int fd);
 
         int getPort();
         std::string getRoot();
         std::string getName();
+        int getFd();
 
         void clear();
 
