@@ -36,13 +36,18 @@ int main(int ac, char **av)
 		// const int port = 8080;
 
 		serverMap = count_nginx_servers(av[1], serverMap);
-		serverMap[1].display();
-		serverMap[2].display();
+		if (serverMap[1].getId() == 0)
+			return (-1);
 		// en fonction du nombre de server nous devront avoir obligatoirement plusieurs socket et peuteter plusieurs epoll je sais pas encore
 		serverMap[1].setFd(create_server_socket(serverMap[1].getPort()));
 		// revoir le setup d'epoll pour plusieurs server
 		int server_fd = serverMap[1].getFd();
 		int epoll_fd = setup_epoll(server_fd);
+
+		if (DEBUG){
+			serverMap[1].display();
+			serverMap[2].display();
+		}
 
 		std::cout << "listen on http://localhost:" << serverMap[1].getPort() << std::endl;
 		run_server(epoll_fd, server_fd);
