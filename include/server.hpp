@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:20:38 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/25 11:55:24 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/25 13:08:59 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <csignal>
 #include <set>
+#include <stdexcept>
 
 #include "class/parsing_class.hpp"
 
