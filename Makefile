@@ -9,7 +9,7 @@ INCLUDE_DIR = include/
 SRC = main.cpp \
 	  server/handle_connection.cpp server/init.cpp server/utils.cpp server/handle_inout.cpp \
 	  response/response.cpp \
-	  parsing/parse_server.cpp parsing/parsing_class.cpp
+	  parsing/parse_server.cpp parsing/parsing_class.cpp parsing/handle_directive.cpp parsing/handle_file.cpp parsing/parsing_utils.cpp
 
 OBJS = $(SRC:%.cpp=$(OBJ_DIR)%.o)
 

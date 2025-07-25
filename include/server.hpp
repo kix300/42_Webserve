@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:20:38 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/25 13:08:59 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/25 14:15:52 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,4 +74,21 @@ std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, st
 std::string trim(const std::string& str);
 int fill_server(std::string line, std::string root_str, std::string servername_str, int port);
 
+//handle_file.cpp
+void processServerBlockContent(const std::string &line, int line_number, Parsing_class &current_server, std::set<int> &used_ports, int &flag_listen, bool in_location_block);
+void validateDirectivesOutsideServerBlock(const std::string &line, int line_number, bool in_server_block);
+void handleServerBlockStart(const std::string &line, int line_number, bool &in_server_block, int &brace_level, int &server_count, Parsing_class &current_server);
+void handleLocationBlock(const std::string &line, bool &in_location_block, int &brace_level);
+void handleClosingBrace(int line_number, bool &in_server_block, bool &in_location_block, int &brace_level, int &flag_listen, int server_count, Parsing_class &current_server, std::map<int, Parsing_class> &serverMap);
+
+//handle_directive.cpp
+template <typename T> std::string toString(const T &value);
+void handleListenDirective(const std::string &line, int line_number, Parsing_class &current_server, std::set<int> &used_ports, int &flag_listen);
+void handleServerNameDirective(const std::string &line, int line_number, Parsing_class &current_server);
+void handleRootDirective(const std::string &line, int line_number, Parsing_class &current_server);
+
+//parsing_utils.cpp
+std::string trim(const std::string &str);
+bool isValidPort(const std::string &portStr);
+bool directoryExists(const std::string &path);
 #endif // !SERVER_HPP
