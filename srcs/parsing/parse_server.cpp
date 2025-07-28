@@ -29,6 +29,7 @@ std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, st
         int line_number = 0;
         bool in_server_block = false;
         bool in_location_block = false;
+        std::string current_location_path;
         std::string line;
         Parsing_class current_server;
         std::set<int> used_ports;
@@ -49,7 +50,7 @@ std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, st
             }
             else if (in_server_block && line.compare(0, 8, "location") == 0)
             {
-                handleLocationBlock(line, in_location_block, brace_level);
+                handleLocationBlock(line, line_number, in_location_block, brace_level, current_location_path, current_server);
             }
             else if (line.find('}') != std::string::npos)
             {
@@ -60,7 +61,7 @@ std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, st
             else if (in_server_block && brace_level >= 1)
             {
                 processServerBlockContent(line, line_number, current_server,
-                                          used_ports, flag_listen, in_location_block);
+                                          used_ports, flag_listen, in_location_block, current_location_path);
             }
         }
 

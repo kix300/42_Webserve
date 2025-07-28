@@ -12,9 +12,12 @@
 
 #include "../../include/server.hpp"
 
-void processServerBlockContent(const std::string &line, int line_number, Parsing_class &current_server, std::set<int> &used_ports, int &flag_listen, bool in_location_block)
+void processServerBlockContent(const std::string &line, int line_number, Parsing_class &current_server, std::set<int> &used_ports, int &flag_listen, bool in_location_block, const std::string &current_location_path)
 {
-	if (!in_location_block){
+	if (in_location_block){
+		handleLocationDirective(line, line_number, current_server, current_location_path);
+	}
+	else {
 
 		if (line.compare(0, 6, "listen") == 0 && (line[6] == ' ' || line[6] == '\t'))
 		{
@@ -28,9 +31,14 @@ void processServerBlockContent(const std::string &line, int line_number, Parsing
 		{
 			handleRootDirective(line, line_number, current_server);
 		}
-	}
-	else{
-		handleLocationDirective(line, line_number, current_server);
+		else if (line.compare(0, 10, "error_page") == 0 && (line[10] == ' ' || line[10] == '\t'))
+		{
+			handleErrorPageDirective(line, line_number, current_server);
+		}
+		else if (line.compare(0, 20, "client_max_body_size") == 0 && (line[20] == ' ' || line[20] == '\t'))
+		{
+			handleClientMaxBodySizeDirective(line, line_number, current_server);
+		}
 	}
 }
 
@@ -70,11 +78,23 @@ void handleServerBlockStart(const std::string &line, int line_number, bool &in_s
 	}
 }
 
-void handleLocationBlock(const std::string &line, bool &in_location_block, int &brace_level)
+void handleLocationBlock(const std::string &line, int line_number, bool &in_location_block, int &brace_level, std::string &current_location_path, Parsing_class &current_server)
 {
 	size_t open_brace_pos = line.find('{');
 	if (open_brace_pos != std::string::npos)
 	{
+		std::string path = trim(line.substr(8, open_brace_pos - 8));
+		if (path.empty())
+		{
+			throw std::runtime_error("Missing location path in location directive on line " + toString(line_number));
+		}
+		current_location_path = path;
+
+		// The fix: Create and insert the new location context into the map immediately.
+		LocationData new_location_data;
+		new_location_data.path = path;
+		current_server.setMap(path, new_location_data);
+
 		in_location_block = true;
 		brace_level++;
 	}

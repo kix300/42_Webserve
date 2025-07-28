@@ -12,7 +12,7 @@
 
 #include "../../include/server.hpp"
 
-extern volatile sig_atomic_t stop;
+extern volatile sig_atomic_t g_stop_server;
 
 int create_server_socket(const int port){
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -68,9 +68,12 @@ void run_server(int epoll_fd, int server_fd){
 	std::map<int,  ClientData> clients;
 	struct epoll_event events[MAX_EVENTS];
 
-	while (!stop) {
+	while (!g_stop_server) {
 		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (nfds == -1) {
+			if (errno == EINTR) { // Interrupted by signal, check the flag
+                continue;
+            }
 			perror("epoll_wait");
 			exit(EXIT_FAILURE);
 		}

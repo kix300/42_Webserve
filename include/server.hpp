@@ -55,7 +55,11 @@ struct LocationData {
 	std::string fastcgi_pass;
 	std::vector<std::string> limit_except;
 	std::vector<std::string> try_files;
+	std::string redirect;
+	std::vector<std::string> allowed_methods;
 	bool autoindex;
+	std::string expires;
+	std::map<std::string, std::string> add_header;
 
 	LocationData() : autoindex(false) {}
 
@@ -89,10 +93,10 @@ std::string trim(const std::string& str);
 int fill_server(std::string line, std::string root_str, std::string servername_str, int port);
 
 //handle_file.cpp
-void processServerBlockContent(const std::string &line, int line_number, Parsing_class &current_server, std::set<int> &used_ports, int &flag_listen, bool in_location_block);
+void processServerBlockContent(const std::string &line, int line_number, Parsing_class &current_server, std::set<int> &used_ports, int &flag_listen, bool in_location_block, const std::string &current_location_path);
 void validateDirectivesOutsideServerBlock(const std::string &line, int line_number, bool in_server_block);
 void handleServerBlockStart(const std::string &line, int line_number, bool &in_server_block, int &brace_level, int &server_count, Parsing_class &current_server);
-void handleLocationBlock(const std::string &line, bool &in_location_block, int &brace_level);
+void handleLocationBlock(const std::string &line, int line_number, bool &in_location_block, int &brace_level, std::string &current_location_path, Parsing_class &current_server);
 void handleClosingBrace(int line_number, bool &in_server_block, bool &in_location_block, int &brace_level, int &flag_listen, int server_count, Parsing_class &current_server, std::map<int, Parsing_class> &serverMap);
 
 //handle_directive.cpp
@@ -100,6 +104,9 @@ template <typename T> std::string toString(const T &value);
 void handleListenDirective(const std::string &line, int line_number, Parsing_class &current_server, std::set<int> &used_ports, int &flag_listen);
 void handleServerNameDirective(const std::string &line, int line_number, Parsing_class &current_server);
 void handleRootDirective(const std::string &line, int line_number, Parsing_class &current_server);
+void handleLocationDirective(const std::string &line, int line_number, Parsing_class &current_server, const std::string &current_location_path);
+void handleErrorPageDirective(const std::string &line, int line_number, Parsing_class &current_server);
+void handleClientMaxBodySizeDirective(const std::string &line, int line_number, Parsing_class &current_server);
 
 //parsing_utils.cpp
 std::string trim(const std::string &str);

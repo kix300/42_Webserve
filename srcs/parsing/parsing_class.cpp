@@ -12,7 +12,7 @@
 
 #include "../../include/class/parsing_class.hpp"
 
-Parsing_class::Parsing_class() : _port(0), _root("default"), _name("default"), _server_fd(0), _server_id(0), _error(false), _index("default"){}
+Parsing_class::Parsing_class() : _port(0), _root("default"), _name("default"), _server_fd(0), _server_id(0), _client_max_body_size(128 * 1024), _error(false), _index("default"){}
 
 Parsing_class::~Parsing_class(){}
 
@@ -49,12 +49,32 @@ void Parsing_class::setMap(const std::string &path, const LocationData &data){
 	_LocationMap[path] = data;
 }
 
-const LocationData& Parsing_class::getLocation(const std::string& path) const {
-	std::map<std::string, LocationData>::const_iterator it = _LocationMap.find(path);
+void Parsing_class::setErrorPage(int error_code, const std::string& page) {
+    _error_pages[error_code] = page;
+}
+
+void Parsing_class::setClientMaxBodySize(long long size) {
+    _client_max_body_size = size;
+}
+
+LocationData& Parsing_class::getLocation(const std::string& path) {
+	std::map<std::string, LocationData>::iterator it = _LocationMap.find(path);
 	if (it == _LocationMap.end()) {
 		throw std::runtime_error("Location not found");
 	}
 	return it->second;
+}
+
+const std::string& Parsing_class::getErrorPage(int error_code) const {
+    std::map<int, std::string>::const_iterator it = _error_pages.find(error_code);
+    if (it == _error_pages.end()) {
+        throw std::runtime_error("Error page not found");
+    }
+    return it->second;
+}
+
+long long Parsing_class::getClientMaxBodySize() const {
+    return _client_max_body_size;
 }
 
 int Parsing_class::getPort(){ return _port; }

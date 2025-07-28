@@ -28,6 +28,8 @@ class Parsing_class {
         std::string _name;
         int _server_fd;
         int _server_id;
+		std::map<int, std::string> _error_pages;
+		long long _client_max_body_size;
 		bool _error;
 		std::string _index;
 		std::map<std::string, LocationData> _LocationMap;
@@ -47,6 +49,8 @@ class Parsing_class {
         void setId(int id);
         void setError(bool error);
 		void setMap(const std::string &path, const LocationData &data);
+		void setErrorPage(int error_code, const std::string& page);
+		void setClientMaxBodySize(long long size);
 
         std::string getRoot();
         std::string getName();
@@ -54,7 +58,9 @@ class Parsing_class {
         int getPort();
         int getId();
         bool getError();
-		const LocationData& getLocation(const std::string& path) const;
+		LocationData& getLocation(const std::string& path);
+		const std::string& getErrorPage(int error_code) const;
+		long long getClientMaxBodySize() const;
 		
 
         void clear();
