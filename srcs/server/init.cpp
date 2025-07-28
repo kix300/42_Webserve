@@ -14,6 +14,7 @@
 
 extern volatile sig_atomic_t g_stop_server;
 
+//Creation dun socket en fonction du port
 int create_server_socket(const int port){
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_fd == -1){
@@ -45,6 +46,7 @@ int create_server_socket(const int port){
 	return server_fd;
 }
 
+//on va setup epoll aavec tous les fd des servers
 int setup_epoll(std::map<int, Parsing_class> serverMap){
 	int epoll_fd = epoll_create1(0);
 	if (epoll_fd == -1) {

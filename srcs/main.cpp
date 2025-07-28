@@ -24,6 +24,11 @@ void signal_handler(int signum)
 	g_stop_server = 1;
 }
 
+
+
+//Fonction principal du projet, on parse le fichier quon met dans une map
+//on parcourt cette map pour creer des fd pour chaque server et on add a epoll
+//puis on run le server
 int main(int ac, char **av)
 {
 	if (ac == 2)
@@ -41,21 +46,17 @@ int main(int ac, char **av)
 			return 1;
 		}
 
-		// This part seems to be a placeholder. The actual server setup should likely
-		// loop through the serverMap and set up multiple servers if needed.
 		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 			it->second.setFd(create_server_socket(it->second.getPort()));
 			if (it->second.getFd() < 0)
 				return 1;
     	}
-		int server_fd = serverMap[1].getFd();
-		if (server_fd < 0)
-			return 1;
-
 		int epoll_fd = setup_epoll(serverMap);
 		if (epoll_fd < 0)
 		{
-			close(server_fd);
+			for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+				close(it->second.getFd());
+			}
 			return 1;
 		}
 
@@ -66,17 +67,17 @@ int main(int ac, char **av)
 		}
 
 		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
-            std::cout << "listen on http://localhost:" << it->second.getPort() << std::endl;
-        }
-        run_server(epoll_fd, serverMap);
+			std::cout << "listen on http://localhost:" << it->second.getPort() << std::endl;
+		}
+		run_server(epoll_fd, serverMap);
 
-        // Cleanup after the server loop has finished
-        std::cout << "\nServer shutting down gracefully..." << std::endl;
-        for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
-            close(it->second.getFd());
-        }
-        close(epoll_fd);
-        std::cout << "Server stopped." << std::endl;
+		// Cleanup after the server loop has finished
+		std::cout << "\nServer shutting down gracefully..." << std::endl;
+		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+			close(it->second.getFd());
+		}
+		close(epoll_fd);
+		std::cout << "Server stopped." << std::endl;
 
 		return 0;
 	}
