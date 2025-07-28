@@ -45,12 +45,14 @@ int main(int ac, char **av)
 		// loop through the serverMap and set up multiple servers if needed.
 		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 			it->second.setFd(create_server_socket(it->second.getPort()));
+			if (it->second.getFd() < 0)
+				return 1;
     	}
 		int server_fd = serverMap[1].getFd();
 		if (server_fd < 0)
 			return 1;
 
-		int epoll_fd = setup_epoll(server_fd);
+		int epoll_fd = setup_epoll(serverMap);
 		if (epoll_fd < 0)
 		{
 			close(server_fd);
@@ -65,7 +67,7 @@ int main(int ac, char **av)
 		}
 
 		std::cout << "listen on http://localhost:" << serverMap[1].getPort() << std::endl;
-		run_server(epoll_fd, server_fd);
+		run_server(epoll_fd, serverMap);
 
 		// Cleanup after the server loop has finished
 		std::cout << "\nServer shutting down gracefully..." << std::endl;

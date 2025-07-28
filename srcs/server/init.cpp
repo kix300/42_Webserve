@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:34:17 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/24 14:17:06 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/28 18:24:28 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ int create_server_socket(const int port){
 	return server_fd;
 }
 
-int setup_epoll(int server_fd){
+int setup_epoll(std::map<int, Parsing_class> serverMap){
 	int epoll_fd = epoll_create1(0);
 	if (epoll_fd == -1) {
 		perror("epoll_create1");
@@ -53,18 +53,22 @@ int setup_epoll(int server_fd){
 	}
 
 	struct epoll_event event;
-	event.events = EPOLLIN;
-	event.data.fd = server_fd;
+	
+	for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+		event.events = EPOLLIN;
+		event.data.fd = it->second.getFd();
+		event.data.u32 = it->second.getPort();
+		
 
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &event) == -1) {
-		perror("epoll_ctl: server_fd");
-		exit(EXIT_FAILURE);
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, it->second.getFd(), &event) == -1) {
+			perror("epoll_ctl: server_fd");
+			exit(EXIT_FAILURE);
+		}
 	}
-
 	return epoll_fd;
 }
 
-void run_server(int epoll_fd, int server_fd){
+void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 	std::map<int,  ClientData> clients;
 	struct epoll_event events[MAX_EVENTS];
 
@@ -78,10 +82,14 @@ void run_server(int epoll_fd, int server_fd){
 			exit(EXIT_FAILURE);
 		}
 		for (int i = 0; i < nfds; ++i) {
-			if (events[i].data.fd == server_fd) {
-				handle_new_connection(epoll_fd, server_fd, clients);
-			} else {
-				handle_client_event(epoll_fd, events[i], clients);
+				// std::cout << i << std::endl;
+				for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+				if (events[i].data.fd == it->second.getFd()) {
+					handle_new_connection(epoll_fd, it->second.getFd(), clients);
+					break;
+				} else {
+					handle_client_event(epoll_fd, events[i], clients);
+				}
 			}
 		}
 	}

@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:20:38 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/25 14:15:52 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/28 18:06:27 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,8 +69,8 @@ struct LocationData {
 //server/
 //main.cpp
 int	create_server_socket( const int port );
-int	setup_epoll(int server_fd);
-void	run_server(int epoll_fd, int server_fd);
+int	setup_epoll(std::map<int, Parsing_class> serverMap);
+void	run_server(int epoll_fd, std::map<int, Parsing_class> serverMap);
 
 //handle_connection.cpp
 void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData>& clients);
