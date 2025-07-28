@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <fcntl.h>
 #include <map>
+#include <vector>
 #include <cstring>
 #include <sys/socket.h>
 #include <sys/epoll.h>
@@ -45,6 +46,19 @@ struct ClientData {
 	std::string read_buff;
 	std::string write_buff;
 	bool keep_alive;
+};
+
+struct LocationData {
+	std::string path;
+	std::string root;
+	std::string index;
+	std::string fastcgi_pass;
+	std::vector<std::string> limit_except;
+	std::vector<std::string> try_files;
+	bool autoindex;
+
+	LocationData() : autoindex(false) {}
+
 };
 
 

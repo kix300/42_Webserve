@@ -19,6 +19,7 @@
 //savoir le port
 //savoir la localisation des fichiers plusieur type
 //savoir le nom du domaine
+struct LocationData;
 class Parsing_class {
     //variable qui sera donner a server class
     protected:
@@ -27,7 +28,9 @@ class Parsing_class {
         std::string _name;
         int _server_fd;
         int _server_id;
-        bool _error;
+		bool _error;
+		std::string _index;
+		std::map<std::string, LocationData> _LocationMap;
         //map de location
         //liste index
 
@@ -37,12 +40,13 @@ class Parsing_class {
         ~Parsing_class();
         void display();
 
-        void setRoot(std::string root);
-        void setName(std::string name);
+        void setRoot(std::string &root);
+        void setName(std::string &name);
         void setFd(int fd);
         void setPort(int port);
         void setId(int id);
         void setError(bool error);
+		void setMap(const std::string &path, const LocationData &data);
 
         std::string getRoot();
         std::string getName();
@@ -50,6 +54,8 @@ class Parsing_class {
         int getPort();
         int getId();
         bool getError();
+		const LocationData& getLocation(const std::string& path) const;
+		
 
         void clear();
 

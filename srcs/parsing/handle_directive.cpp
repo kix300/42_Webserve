@@ -23,7 +23,7 @@ void handleListenDirective(const std::string &line, int line_number, Parsing_cla
 {
     if (flag_listen == 0)
     {
-        flag_listen = 1;
+        flag_listen = 0;
         std::string port_str = trim(line.substr(6));
         size_t semicolon = port_str.find(';');
         if (semicolon != std::string::npos)
