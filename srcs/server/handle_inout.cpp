@@ -23,6 +23,9 @@ bool handle_write(int client_fd, ClientData & client){
 		return (true);
 	ssize_t count = write(client_fd, client.write_buff.data(), client.write_buff.size());
 	if (count == -1){
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			return true; // Not an error, just no data to write right now
+		}
 		perror("write");
 		return false;
 	}
@@ -38,6 +41,9 @@ bool handle_read(int client_fd, ClientData & client){
 	char buffer[BUFFER_SIZE];
 	ssize_t count = read(client_fd, buffer, BUFFER_SIZE);
 	if (count == -1){
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			return true; // Not an error, just no data to read right now
+		}
 		perror("read");
 		return false;
 	}

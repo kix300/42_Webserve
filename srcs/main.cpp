@@ -60,20 +60,23 @@ int main(int ac, char **av)
 		}
 
 		if (DEBUG){
-			serverMap[1].display();
-			// Assuming serverMap[2] might exist based on original code, but not guaranteed.
-			// If it doesn't, this line would cause a crash. Consider safer iteration.
-			serverMap[2].display();
+			for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it){
+				it->second.display();
+			}
 		}
 
-		std::cout << "listen on http://localhost:" << serverMap[1].getPort() << std::endl;
-		run_server(epoll_fd, serverMap);
+		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+            std::cout << "listen on http://localhost:" << it->second.getPort() << std::endl;
+        }
+        run_server(epoll_fd, serverMap);
 
-		// Cleanup after the server loop has finished
-		std::cout << "\nServer shutting down gracefully..." << std::endl;
-		close(server_fd);
-		close(epoll_fd);
-		std::cout << "Server stopped." << std::endl;
+        // Cleanup after the server loop has finished
+        std::cout << "\nServer shutting down gracefully..." << std::endl;
+        for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+            close(it->second.getFd());
+        }
+        close(epoll_fd);
+        std::cout << "Server stopped." << std::endl;
 
 		return 0;
 	}

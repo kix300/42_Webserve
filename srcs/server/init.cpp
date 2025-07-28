@@ -57,7 +57,7 @@ int setup_epoll(std::map<int, Parsing_class> serverMap){
 	for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 		event.events = EPOLLIN;
 		event.data.fd = it->second.getFd();
-		event.data.u32 = it->second.getPort();
+		
 		
 
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, it->second.getFd(), &event) == -1) {
@@ -76,21 +76,23 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (nfds == -1) {
 			if (errno == EINTR) { // Interrupted by signal, check the flag
-                continue;
-            }
+				continue;
+			}
 			perror("epoll_wait");
 			exit(EXIT_FAILURE);
 		}
 		for (int i = 0; i < nfds; ++i) {
-				// std::cout << i << std::endl;
-				for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+			bool is_server_socket = false;
+			// std::cout << i << std::endl;
+			for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 				if (events[i].data.fd == it->second.getFd()) {
+					is_server_socket = true;
 					handle_new_connection(epoll_fd, it->second.getFd(), clients);
 					break;
-				} else {
-					handle_client_event(epoll_fd, events[i], clients);
 				}
 			}
+			if (!is_server_socket)
+					handle_client_event(epoll_fd, events[i], clients);
 		}
 	}
 }
