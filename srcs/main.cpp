@@ -43,7 +43,9 @@ int main(int ac, char **av)
 
 		// This part seems to be a placeholder. The actual server setup should likely
 		// loop through the serverMap and set up multiple servers if needed.
-		serverMap[1].setFd(create_server_socket(serverMap[1].getPort()));
+		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+			it->second.setFd(create_server_socket(it->second.getPort()));
+    	}
 		int server_fd = serverMap[1].getFd();
 		if (server_fd < 0)
 			return 1;
