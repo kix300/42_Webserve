@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 10:40:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/29 11:27:02 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/29 11:45:24 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,7 @@ ClientData &parsing_response(ClientData &client){
 
     size_t first_line_end = request.find("\r\n");
     if (first_line_end == std::string::npos) {
-        // Invalid request, handle error
-        return client;
+        throw std::runtime_error("400 Bad Request: Invalid request line");
     }
 
     std::string request_line = request.substr(0, first_line_end);
@@ -30,9 +29,14 @@ ClientData &parsing_response(ClientData &client){
 
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
-		perror("not good methode");
-		return client;
+		throw std::runtime_error("501 Not Implemented: Unsupported method");
 	}
+
+	if (path.empty() || http.empty())
+	{
+		throw std::runtime_error("400 Bad Request: Malformed request line");
+	}
+
 	std::cout << method  << " " << path << " " << http << std::endl;
     client.methode = method;
     client.path = path;

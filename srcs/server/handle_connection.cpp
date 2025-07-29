@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 17:24:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/29 11:21:17 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/29 16:05:21 by ozen             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,33 +53,42 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
     }
     ClientData& client = it->second;
 	if (event.events & EPOLLIN){
-		//recup avec handle read
-		if (! handle_read(client_fd, client)){
-			close_client(epoll_fd, client_fd, clients);
-		}
-		//on donne une reponse
-		if (DEBUG)
-			std::cout << client.read_buff << std::endl;
-		//ici on doit parser le read_buff pour choper des infos sur les methodes
-		client = parsing_response(client);
-		if (client.read_buff.find("\r\n\r\n") != std::string::npos){
-			prepare_response(client);
+		try {
+			if (!handle_read(client_fd, client)){
+				close_client(epoll_fd, client_fd, clients);
+				return;
+			}
 
-			//puis on surveille epollout
+			if (client.read_buff.find("\r\n\r\n") != std::string::npos){
+				parsing_response(client);
+				prepare_response(client);
+
+				struct epoll_event ev;
+				ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+				ev.data.fd = client_fd;
+				epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &ev);
+			}
+		} catch (const std::exception &e) {
+			// Log the error
+			std::cerr << "Error handling client " << client_fd << ": " << e.what() << std::endl;
+			// Prepare an error response
+			// For simplicity, sending a generic 400 Bad Request. 
+			// You might want to parse the error message to send more specific codes.
+			client.write_buff = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+			client.keep_alive = false;
+
 			struct epoll_event ev;
 			ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
 			ev.data.fd = client_fd;
 			epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &ev);
-
 		}
 	}
 
 	if (event.events & EPOLLOUT){
-		//handle write
-		if (! handle_write(client_fd, client)){
+		if (!handle_write(client_fd, client)){
 			close_client(epoll_fd, client_fd, clients);
+			return;
 		}
-		//on retourn sur epollint
 		if (client.write_buff.empty()){
 			struct epoll_event ev;
 			ev.events = EPOLLIN | EPOLLET;
@@ -92,9 +101,6 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
 	}
 
 	if (event.events & (EPOLLERR | EPOLLHUP)){
-		//close clients
 		close_client(epoll_fd, client_fd, clients);
 	}
 }
-/*
-*/

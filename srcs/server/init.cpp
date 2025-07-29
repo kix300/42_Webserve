@@ -6,11 +6,13 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:34:17 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/28 18:24:28 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/29 16:05:21 by ozen             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/server.hpp"
+#include <cerrno>
+#include <cstring>
 
 extern volatile sig_atomic_t g_stop_server;
 
@@ -18,14 +20,13 @@ extern volatile sig_atomic_t g_stop_server;
 int create_server_socket(const int port){
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_fd == -1){
-		perror("socket");
-		exit(EXIT_FAILURE);
+		throw std::runtime_error("socket() failed: " + std::string(strerror(errno)));
 	}
 
 	int opt = 1;
 	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))){
-		perror("socket opt");
-		exit(EXIT_FAILURE);
+		close(server_fd);
+		throw std::runtime_error("setsockopt() failed: " + std::string(strerror(errno)));
 	}
 
 	struct sockaddr_in address;
@@ -34,13 +35,13 @@ int create_server_socket(const int port){
 	address.sin_port = htons(port);
 
 	if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0 ){
-		perror("bind");
-		exit(EXIT_FAILURE);
+		close(server_fd);
+		throw std::runtime_error("bind() failed: " + std::string(strerror(errno)));
 	}
 
 	if (listen(server_fd, SOMAXCONN) < 0){
-		perror("listen");
-		exit(EXIT_FAILURE);
+		close(server_fd);
+		throw std::runtime_error("listen() failed: " + std::string(strerror(errno)));
 	}
 
 	return server_fd;
@@ -50,8 +51,7 @@ int create_server_socket(const int port){
 int setup_epoll(std::map<int, Parsing_class> serverMap){
 	int epoll_fd = epoll_create1(0);
 	if (epoll_fd == -1) {
-		perror("epoll_create1");
-		exit(EXIT_FAILURE);
+		throw std::runtime_error("epoll_create1() failed: " + std::string(strerror(errno)));
 	}
 
 	struct epoll_event event;
@@ -60,11 +60,9 @@ int setup_epoll(std::map<int, Parsing_class> serverMap){
 		event.events = EPOLLIN;
 		event.data.fd = it->second.getFd();
 		
-		
-
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, it->second.getFd(), &event) == -1) {
-			perror("epoll_ctl: server_fd");
-			exit(EXIT_FAILURE);
+			close(epoll_fd);
+			throw std::runtime_error("epoll_ctl() failed: " + std::string(strerror(errno)));
 		}
 	}
 	return epoll_fd;
@@ -80,8 +78,7 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 			if (errno == EINTR) { // Interrupted by signal, check the flag
 				continue;
 			}
-			perror("epoll_wait");
-			exit(EXIT_FAILURE);
+			throw std::runtime_error("epoll_wait() failed: " + std::string(strerror(errno)));
 		}
 		for (int i = 0; i < nfds; ++i) {
 			bool is_server_socket = false;
