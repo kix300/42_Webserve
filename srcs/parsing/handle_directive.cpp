@@ -12,12 +12,6 @@
 
 #include "../../include/server.hpp"
 
-template <typename T> std::string toString(const T &value)
-{
-    std::ostringstream oss;
-    oss << value;
-    return oss.str();
-}
 
 void handleLocationDirective(const std::string &line, int line_number, Parsing_class &current_server, const std::string &current_location_path)
 {
@@ -63,7 +57,7 @@ void handleLocationDirective(const std::string &line, int line_number, Parsing_c
         loc.add_header[trim(header_name)] = trim(header_value);
     }
     else {
-        throw std::runtime_error("Unknown directive in location block (line " + toString(line_number) + ")");
+        throw std::runtime_error("Unknown directive in location block (line " + tostring(line_number) + ")");
     }
 }
 
@@ -80,12 +74,12 @@ void handleListenDirective(const std::string &line, int line_number, Parsing_cla
         }
         else
         {
-            throw std::runtime_error("Missing ';' at end of listen directive (line " + toString(line_number) + ")");
+            throw std::runtime_error("Missing ';' at end of listen directive (line " + tostring(line_number) + ")");
         }
 
         if (!isValidPort(port_str))
         {
-            throw std::runtime_error("Invalid port number (line " + toString(line_number) + ")");
+            throw std::runtime_error("Invalid port number (line " + tostring(line_number) + ")");
         }
 
         std::istringstream iss(port_str);
@@ -94,7 +88,7 @@ void handleListenDirective(const std::string &line, int line_number, Parsing_cla
         {
             if (used_ports.find(port) != used_ports.end())
             {
-                throw std::runtime_error("Duplicate port (line " + toString(line_number) + ")");
+                throw std::runtime_error("Duplicate port (line " + tostring(line_number) + ")");
             }
             used_ports.insert(port);
             current_server.setPort(port);
@@ -112,12 +106,12 @@ void handleServerNameDirective(const std::string &line, int line_number, Parsing
     }
     else
     {
-        throw std::runtime_error("Missing ';' at end of server_name directive (line " + toString(line_number) + ")");
+        throw std::runtime_error("Missing ';' at end of server_name directive (line " + tostring(line_number) + ")");
     }
 
     if (name_str.empty())
     {
-        throw std::runtime_error("Empty server_name directive (line " + toString(line_number) + ")");
+        throw std::runtime_error("Empty server_name directive (line " + tostring(line_number) + ")");
     }
 
     current_server.setName(name_str);
@@ -133,12 +127,12 @@ void handleRootDirective(const std::string &line, int line_number, Parsing_class
     }
     else
     {
-        throw std::runtime_error("Missing ';' at end of root directive (line " + toString(line_number) + ")");
+        throw std::runtime_error("Missing ';' at end of root directive (line " + tostring(line_number) + ")");
     }
 
     if (root_str.empty())
     {
-        throw std::runtime_error("Empty root directive (line " + toString(line_number) + ")");
+        throw std::runtime_error("Empty root directive (line " + tostring(line_number) + ")");
     }
 
     if (root_str[root_str.length() - 1] != '/')
@@ -174,7 +168,7 @@ void handleErrorPageDirective(const std::string &line, int line_number, Parsing_
     }
     else
     {
-        throw std::runtime_error("Missing ';' at end of error_page directive (line " + toString(line_number) + ")");
+        throw std::runtime_error("Missing ';' at end of error_page directive (line " + tostring(line_number) + ")");
     }
 
     for (size_t i = 0; i < error_codes.size(); ++i)
@@ -193,7 +187,7 @@ void handleClientMaxBodySizeDirective(const std::string &line, int line_number, 
     }
     else
     {
-        throw std::runtime_error("Missing ';' at end of client_max_body_size directive (line " + toString(line_number) + ")");
+        throw std::runtime_error("Missing ';' at end of client_max_body_size directive (line " + tostring(line_number) + ")");
     }
 
     long long size;
@@ -218,7 +212,7 @@ void handleClientMaxBodySizeDirective(const std::string &line, int line_number, 
                 size *= 1024 * 1024 * 1024;
                 break;
             default:
-                throw std::runtime_error("Invalid unit in client_max_body_size directive (line " + toString(line_number) + ")");
+                throw std::runtime_error("Invalid unit in client_max_body_size directive (line " + tostring(line_number) + ")");
         }
     }
 

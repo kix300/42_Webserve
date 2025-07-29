@@ -51,7 +51,7 @@ void validateDirectivesOutsideServerBlock(const std::string &line, int line_numb
 		line.find("location") == 0 ||
 		line.find("error_page") == 0))
 	{
-		throw std::runtime_error("Directive outside server block (line " + toString(line_number) + ")");
+		throw std::runtime_error("Directive outside server block (line " + tostring(line_number) + ")");
 	}
 }
 
@@ -62,13 +62,13 @@ void handleServerBlockStart(const std::string &line, int line_number, bool &in_s
 	{
 		if (in_server_block)
 		{
-			throw std::runtime_error("Nested server blocks are not allowed (line " + toString(line_number) + ")");
+			throw std::runtime_error("Nested server blocks are not allowed (line " + tostring(line_number) + ")");
 		}
 
 		std::string between = trim(line.substr(6, open_brace_pos - 6));
 		if (!between.empty())
 		{
-			throw std::runtime_error("Unexpected tokens after 'server' directive (line " + toString(line_number) + ")");
+			throw std::runtime_error("Unexpected tokens after 'server' directive (line " + tostring(line_number) + ")");
 		}
 
 		in_server_block = true;
@@ -86,7 +86,7 @@ void handleLocationBlock(const std::string &line, int line_number, bool &in_loca
 		std::string path = trim(line.substr(8, open_brace_pos - 8));
 		if (path.empty())
 		{
-			throw std::runtime_error("Missing location path in location directive on line " + toString(line_number));
+			throw std::runtime_error("Missing location path in location directive on line " + tostring(line_number));
 		}
 		current_location_path = path;
 
@@ -109,7 +109,7 @@ void handleClosingBrace(int line_number, bool &in_server_block, bool &in_locatio
 		{
 			if (current_server.getPort() == 0)
 			{
-				throw std::runtime_error("Missing 'listen' directive in server block (line " + toString(line_number) + ")");
+				throw std::runtime_error("Missing 'listen' directive in server block (line " + tostring(line_number) + ")");
 			}
 
 			current_server.setId(server_count);
@@ -120,11 +120,11 @@ void handleClosingBrace(int line_number, bool &in_server_block, bool &in_locatio
 		}
 		else if (brace_level < 0)
 		{
-			throw std::runtime_error("Unexpected '}' (line " + toString(line_number) + ")");
+			throw std::runtime_error("Unexpected '}' (line " + tostring(line_number) + ")");
 		}
 	}
 	else
 {
-		throw std::runtime_error("Unexpected '}' without matching '{' (line " + toString(line_number) + ")");
+		throw std::runtime_error("Unexpected '}' without matching '{' (line " + tostring(line_number) + ")");
 	}
 }

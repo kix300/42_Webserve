@@ -71,11 +71,22 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
 		} catch (const std::exception &e) {
 			// Log the error
 			std::cerr << "Error handling client " << client_fd << ": " << e.what() << std::endl;
+
 			// Prepare an error response
 			// For simplicity, sending a generic 400 Bad Request. 
 			// You might want to parse the error message to send more specific codes.
-			client.write_buff = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+			std::string e_mesg = e.what();
+        	size_t colon= e_mesg.find(':');
+            e_mesg = trim(e_mesg.substr(0, colon));
+			client.write_buff = "HTTP/1.1 " + e_mesg + " \r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
 			client.keep_alive = false;
+			
+			// client.write_buff = 
+			// 	"HTTP/1.1" + (std::string)e.what(); "\r\n"
+			// 	"Content-Type: text/html\r\n"
+			// 	"Content-Length: 0 \r\n"
+			// 	"Connection: close\r\n"
+			// 	"\r\n\r\n";
 
 			struct epoll_event ev;
 			ev.events = EPOLLIN | EPOLLOUT | EPOLLET;

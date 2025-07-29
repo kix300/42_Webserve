@@ -27,7 +27,7 @@ ClientData &parsing_response(ClientData &client){
     std::stringstream ss(request_line);
     ss >> method >> path >> http;
 
-	if (method != "GET" && method != "POST" && method != "DELETE")
+	if (method != "GETA" && method != "POST" && method != "DELETE")
 	{
 		throw std::runtime_error("501 Not Implemented: Unsupported method");
 	}

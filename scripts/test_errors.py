@@ -13,6 +13,23 @@
 import requests
 import json
 
+
+
+
+
+# curl -X BADMETHOD http://localhost:8081
+
+
+
+
+
+
+
+
+
+
+
+
 def test_http_errors(base_url):
     results = {
         "success": [],

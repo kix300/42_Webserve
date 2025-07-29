@@ -102,7 +102,12 @@ void handleLocationBlock(const std::string &line, int line_number, bool &in_loca
 void handleClosingBrace(int line_number, bool &in_server_block, bool &in_location_block, int &brace_level, int &flag_listen, int server_count, Parsing_class &current_server, std::map<int, Parsing_class> &serverMap);
 
 //handle_directive.cpp
-template <typename T> std::string toString(const T &value);
+template <typename T> std::string tostring(const T &value)
+{
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}
 void handleListenDirective(const std::string &line, int line_number, Parsing_class &current_server, std::set<int> &used_ports, int &flag_listen);
 void handleServerNameDirective(const std::string &line, int line_number, Parsing_class &current_server);
 void handleRootDirective(const std::string &line, int line_number, Parsing_class &current_server);
