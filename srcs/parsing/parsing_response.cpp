@@ -37,7 +37,8 @@ ClientData &parsing_response(ClientData &client){
 		throw std::runtime_error("400 Bad Request: Malformed request line");
 	}
 
-	std::cout << method  << " " << path << " " << http << std::endl;
+	if (DEBUG)
+		std::cout << method  << " " << path << " " << http << std::endl;
     client.methode = method;
     client.path = path;
 	return client;
