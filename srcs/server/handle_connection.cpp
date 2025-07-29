@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 17:24:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/07 20:31:16 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/29 11:21:17 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData
 		return;
 	}
 
-	fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL, 0) | O_NONBLOCK);
+	fcntl(client_fd, F_SETFL, O_NONBLOCK); // met le fd a non bloquant
 
 	struct epoll_event event;
 	event.events = EPOLLIN | EPOLLET;
@@ -35,7 +35,7 @@ void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData
 		return;
 	}
 
-	clients[client_fd] = (ClientData){client_fd, std::string(), std::string(), false};
+	clients[client_fd] = (ClientData){client_fd, std::string(), std::string(), false, std::string(), std::string()};
 
 }
 
@@ -58,6 +58,10 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
 			close_client(epoll_fd, client_fd, clients);
 		}
 		//on donne une reponse
+		if (DEBUG)
+			std::cout << client.read_buff << std::endl;
+		//ici on doit parser le read_buff pour choper des infos sur les methodes
+		client = parsing_response(client);
 		if (client.read_buff.find("\r\n\r\n") != std::string::npos){
 			prepare_response(client);
 

@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:20:38 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/28 18:06:27 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/07/29 11:02:44 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,8 @@ struct ClientData {
 	std::string read_buff;
 	std::string write_buff;
 	bool keep_alive;
+	std::string methode;
+	std::string path;
 };
 
 struct LocationData {
@@ -112,4 +114,7 @@ void handleClientMaxBodySizeDirective(const std::string &line, int line_number, 
 std::string trim(const std::string &str);
 bool isValidPort(const std::string &portStr);
 bool directoryExists(const std::string &path);
+
+//parsing_response.cpp
+ClientData &parsing_response(ClientData &client);
 #endif // !SERVER_HPP

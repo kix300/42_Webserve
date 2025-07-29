@@ -1,0 +1,40 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   parsing_response.cpp                               :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/07/29 10:40:20 by kduroux           #+#    #+#             */
+/*   Updated: 2025/07/29 11:27:02 by kduroux          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../../include/server.hpp"
+#include <stdexcept>
+
+ClientData &parsing_response(ClientData &client){
+
+	std::string request(client.read_buff);
+    std::string method, path, http;
+
+    size_t first_line_end = request.find("\r\n");
+    if (first_line_end == std::string::npos) {
+        // Invalid request, handle error
+        return client;
+    }
+
+    std::string request_line = request.substr(0, first_line_end);
+    std::stringstream ss(request_line);
+    ss >> method >> path >> http;
+
+	if (method != "GET" && method != "POST" && method != "DELETE")
+	{
+		perror("not good methode");
+		return client;
+	}
+	std::cout << method  << " " << path << " " << http << std::endl;
+    client.methode = method;
+    client.path = path;
+	return client;
+};

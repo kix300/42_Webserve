@@ -75,7 +75,7 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 	struct epoll_event events[MAX_EVENTS];
 
 	while (!g_stop_server) {
-		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1); //gerer timeout
 		if (nfds == -1) {
 			if (errno == EINTR) { // Interrupted by signal, check the flag
 				continue;
@@ -85,7 +85,6 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 		}
 		for (int i = 0; i < nfds; ++i) {
 			bool is_server_socket = false;
-			// std::cout << i << std::endl;
 			for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 				if (events[i].data.fd == it->second.getFd()) {
 					is_server_socket = true;
