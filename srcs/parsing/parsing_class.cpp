@@ -113,3 +113,13 @@ std::string Parsing_class::getIndex(){ return _index; }
 
 std::string Parsing_class::getName(){ return _name; }
 
+std::string Parsing_class::findFirstIndexFile(){
+    std::stringstream ss(_index);
+    std::string index_file;
+    while (ss >> index_file) {
+        std::string path = _root + index_file;
+    	return path;
+    }
+	return "";
+}
+

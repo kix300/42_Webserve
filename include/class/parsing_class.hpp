@@ -64,6 +64,7 @@ class Parsing_class {
 		
 
         void clear();
+        std::string findFirstIndexFile();
 
 
 };

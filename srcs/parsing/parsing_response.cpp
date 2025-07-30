@@ -64,7 +64,7 @@ std::string create_body(ClientData &client){
 
 	
 	std::string full_path = client.server->getRoot() + client.path;
-	if (client.path == "/") full_path = client.server->getRoot() + "index.html";
+	if (client.path == "/") full_path = client.server->findFirstIndexFile();
 	std::cout << full_path << std::endl;
 	if (stat(full_path.c_str(), &sb) != 0)
 		throw std::runtime_error("404 Not Found: Bad path");
