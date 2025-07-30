@@ -21,16 +21,36 @@ void Parsing_class::display(){
 	std::cout << "name : " <<  _name << std::endl;
 	std::cout << "port : " <<  _port << std::endl;
 	std::cout << "root : " <<  _root << std::endl;
-	std::cout << "server_fd : " <<  _server_fd << "\n" << std::endl;
+	std::cout << "server_fd : " <<  _server_fd << std::endl;
+	std::cout << "index : " <<  _index << std::endl;
+	std::cout << "client_max_body_size : " << _client_max_body_size << std::endl;
+	for (std::map<int, std::string>::iterator it = _error_pages.begin(); it != _error_pages.end(); it++){
+		std::cout << "error_pages : " << it->second << std::endl;
+	}
+	for (std::map<std::string, LocationData>::iterator it = _LocationMap.begin(); it != _LocationMap.end(); it++){
+		std::cout << "Location path : " << it->second.path << std::endl;
+		std::cout << "Location root : " << it->second.root << std::endl;
+		std::cout << "Location index : " << it->second.index << std::endl;
+		std::cout << "Location fastcgi_pass : " << it->second.fastcgi_pass<< std::endl;
+		std::cout << "Location redirect : " << it->second.redirect << std::endl;
+	}
+	std::cout << std::endl;
+
 }
 
 void Parsing_class::clear(){
 	_port = 0;
-	_name.clear();
-	_root.clear();
+	_root = "default";
+	_name = "default";
 	if (_server_fd > 0)
 		close(_server_fd);
+	_server_fd = 0;
 	_server_id = 0;
+	_client_max_body_size = 128 * 1024;
+	_error = false;
+	_index = "default";
+	_error_pages.clear();
+	_LocationMap.clear();
 }
 
 void Parsing_class::setPort(int port){ _port = port; }
@@ -44,6 +64,8 @@ void Parsing_class::setError(bool error){ _error = error; }
 void Parsing_class::setRoot(std::string &root){ _root = root; }
 
 void Parsing_class::setName(std::string &name){ _name = name; }
+
+void Parsing_class::setIndex(std::string &index){ _index = index; }
 
 void Parsing_class::setMap(const std::string &path, const LocationData &data){ 
 	_LocationMap[path] = data;
@@ -86,6 +108,8 @@ bool Parsing_class::getError(){ return _error; }
 int Parsing_class::getId(){ return _server_id; }
 
 std::string Parsing_class::getRoot(){ return _root; }
+
+std::string Parsing_class::getIndex(){ return _index; }
 
 std::string Parsing_class::getName(){ return _name; }
 

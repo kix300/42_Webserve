@@ -13,7 +13,7 @@
 #include "../../include/server.hpp"
 
 // on ajoute notre nouveau client dans notre map en non bloquant
-void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData>& clients) {
+void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData>& clients, Parsing_class &server) {
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);
 
@@ -35,7 +35,7 @@ void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData
 		return;
 	}
 
-	clients[client_fd] = (ClientData){client_fd, std::string(), std::string(), false, std::string(), std::string()};
+	clients[client_fd] = (ClientData){client_fd, std::string(), std::string(), false, std::string(), std::string(), &server};
 
 }
 
@@ -69,25 +69,14 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
 				epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &ev);
 			}
 		} catch (const std::exception &e) {
-			// Log the error
 			std::cerr << "Error handling client " << client_fd << ": " << e.what() << std::endl;
 
-			// Prepare an error response
-			// For simplicity, sending a generic 400 Bad Request. 
-			// You might want to parse the error message to send more specific codes.
 			std::string e_mesg = e.what();
         	size_t colon= e_mesg.find(':');
             e_mesg = trim(e_mesg.substr(0, colon));
 			client.write_buff = "HTTP/1.1 " + e_mesg + " \r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
 			client.keep_alive = false;
 			
-			// client.write_buff = 
-			// 	"HTTP/1.1" + (std::string)e.what(); "\r\n"
-			// 	"Content-Type: text/html\r\n"
-			// 	"Content-Length: 0 \r\n"
-			// 	"Connection: close\r\n"
-			// 	"\r\n\r\n";
-
 			struct epoll_event ev;
 			ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
 			ev.data.fd = client_fd;

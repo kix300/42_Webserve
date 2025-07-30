@@ -39,6 +39,9 @@ void processServerBlockContent(const std::string &line, int line_number, Parsing
 		{
 			handleClientMaxBodySizeDirective(line, line_number, current_server);
 		}
+		else if (line.compare(0, 5, "index") == 0 && (line[5] == ' ' || line[5] == '\t')){
+			handleIndexNameDirective(line, line_number, current_server);
+		}
 	}
 }
 

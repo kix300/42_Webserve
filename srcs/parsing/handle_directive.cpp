@@ -108,13 +108,22 @@ void handleServerNameDirective(const std::string &line, int line_number, Parsing
     {
         throw std::runtime_error("Missing ';' at end of server_name directive (line " + tostring(line_number) + ")");
     }
-
-    if (name_str.empty())
-    {
-        throw std::runtime_error("Empty server_name directive (line " + tostring(line_number) + ")");
-    }
-
     current_server.setName(name_str);
+}
+
+void handleIndexNameDirective(const std::string &line, int line_number, Parsing_class &current_server)
+{
+    std::string name_str = trim(line.substr(5));
+    size_t semicolon = name_str.find(';');
+    if (semicolon != std::string::npos)
+    {
+        name_str = trim(name_str.substr(0, semicolon));
+    }
+    else
+    {
+        throw std::runtime_error("Missing ';' at end of server_name directive (line " + tostring(line_number) + ")");
+    }
+    current_server.setIndex(name_str);
 }
 
 void handleRootDirective(const std::string &line, int line_number, Parsing_class &current_server)

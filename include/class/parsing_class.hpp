@@ -33,8 +33,6 @@ class Parsing_class {
 		bool _error;
 		std::string _index;
 		std::map<std::string, LocationData> _LocationMap;
-        //map de location
-        //liste index
 
         // fonction de parsing
         public:
@@ -44,6 +42,7 @@ class Parsing_class {
 
         void setRoot(std::string &root);
         void setName(std::string &name);
+        void setIndex(std::string &index);
         void setFd(int fd);
         void setPort(int port);
         void setId(int id);
@@ -54,6 +53,7 @@ class Parsing_class {
 
         std::string getRoot();
         std::string getName();
+        std::string getIndex();
         int getFd();
         int getPort();
         int getId();

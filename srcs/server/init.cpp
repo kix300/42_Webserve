@@ -85,12 +85,13 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 			for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 				if (events[i].data.fd == it->second.getFd()) {
 					is_server_socket = true;
-					handle_new_connection(epoll_fd, it->second.getFd(), clients);
+					handle_new_connection(epoll_fd, it->second.getFd(), clients, it->second);
 					break;
 				}
 			}
-			if (!is_server_socket)
-					handle_client_event(epoll_fd, events[i], clients);
+			if (!is_server_socket){
+				handle_client_event(epoll_fd, events[i], clients);
+			}
 		}
 	}
 }

@@ -13,12 +13,6 @@
 #include "../../include/server.hpp"
 #include <cstdio>
 
-template <typename T>
-std::string to_string(const T& value) {
-	std::ostringstream oss;
-	oss << value;
-	return oss.str();
-}
 
 std::string read_file(const std::string& path) {
 	std::ifstream file(path.c_str(), std::ios::binary);
@@ -36,26 +30,18 @@ std::string read_file(const std::string& path) {
 
 void prepare_response(ClientData& client) {
 	//ici on regarde la requet du navigateur
-	bool is_http_1_1 = (client.read_buff.find("HTTP/1.1") != std::string::npos);
-	bool has_keepalive = (client.read_buff.find("Connection: keep-alive") != std::string::npos);
-	bool has_close = (client.read_buff.find("Connection: close") != std::string::npos);
+	/*
+	*/
 
-	// Règles HTTP/1.1 pour keep-alive (par défaut activé en 1.1)
-	client.keep_alive = is_http_1_1 ? !has_close : has_keepalive;
-
-	size_t start = client.read_buff.find(' ');
-	size_t end = client.read_buff.find(' ', start + 1);
-
-	std::string path = client.read_buff.substr(start + 1, end - start - 1);
-	if (path == "/") path = "/index.html";
-	std::string full_path = "www" + path; // Vos fichiers sont dans un dossier 'static'
-	std::string body = read_file(full_path);
-
+	//construction du body
+	//gestion de root et location
+	std::string body = create_body(client);
+	
 	// Construction des en-têtes
 	client.write_buff = 
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: text/html\r\n"
-		"Content-Length: " + to_string(body.size()) + "\r\n"
+		"Content-Length: " + tostring(body.size()) + "\r\n"
 		"Connection: " + (client.keep_alive ? "keep-alive" : "close") + "\r\n"
 		"\r\n"
 		+ body;
@@ -69,4 +55,3 @@ void prepare_response(ClientData& client) {
 }
 
 
-void error_response(ClientData& client, std::string error);

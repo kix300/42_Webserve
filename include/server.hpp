@@ -35,6 +35,7 @@
 #include <csignal>
 #include <set>
 #include <stdexcept>
+#include <sys/stat.h>
 
 #include "class/parsing_class.hpp"
 
@@ -48,6 +49,7 @@ struct ClientData {
 	bool keep_alive;
 	std::string methode;
 	std::string path;
+	Parsing_class *server;
 };
 
 struct LocationData {
@@ -75,8 +77,8 @@ int	setup_epoll(std::map<int, Parsing_class> serverMap);
 void	run_server(int epoll_fd, std::map<int, Parsing_class> serverMap);
 
 //handle_connection.cpp
-void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData>& clients);
-void handle_client_event(int epoll_fd, const epoll_event &events, std::map<int, ClientData>& clients);
+void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData>& clients, Parsing_class &server);
+void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, ClientData>& clients) ;
 
 //handle_inout.cpp
 bool handle_write(int client_fd, ClientData &client);
@@ -86,7 +88,9 @@ bool handle_read(int client_fd, ClientData &client);
 void close_client(int epoll_fd, int client_fd, std::map<int, ClientData> client);
 
 //response.cpp
-void prepare_response(ClientData & client);
+void prepare_response(ClientData& client);
+std::string create_body(ClientData &client);
+std::string read_file(const std::string& path);
 
 //parsing/
 // parse_server.cpp
@@ -114,6 +118,7 @@ void handleRootDirective(const std::string &line, int line_number, Parsing_class
 void handleLocationDirective(const std::string &line, int line_number, Parsing_class &current_server, const std::string &current_location_path);
 void handleErrorPageDirective(const std::string &line, int line_number, Parsing_class &current_server);
 void handleClientMaxBodySizeDirective(const std::string &line, int line_number, Parsing_class &current_server);
+void handleIndexNameDirective(const std::string &line, int line_number, Parsing_class &current_server);
 
 //parsing_utils.cpp
 std::string trim(const std::string &str);
