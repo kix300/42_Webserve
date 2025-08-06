@@ -63,8 +63,27 @@ std::string create_body(ClientData &client){
 	}
 
 	
-	std::string full_path = client.server->getRoot() + client.path;
-	if (client.path == "/") full_path = client.server->findFirstIndexFile();
+	if (client.server->getRoot() == "default")
+		throw std::runtime_error("500 Internal Server Error: Bad root");
+	std::string full_path;
+	LocationData *locationserver = client.server->getLocation(client.path);
+	full_path = client.server->getRoot() + client.path;
+	if (client.path == "/")
+		full_path = client.server->findFirstIndexFile();
+
+	// si client path est dans une location alors full_path = location + params
+	else if (locationserver != NULL){
+		if (locationserver->root != "" )
+			//ici regarder index 
+			//ici on doit regarder si le path existe
+			//si root existe
+			//quel method est utilisé
+			full_path = findFirstIndexFile(locationserver->index,locationserver->root + locationserver->path); // a changer avec les index
+
+		//si autoindex fonctionne
+		//etc
+	}
+
 	std::cout << full_path << std::endl;
 	if (stat(full_path.c_str(), &sb) != 0)
 		throw std::runtime_error("404 Not Found: Bad path");
@@ -73,3 +92,17 @@ std::string create_body(ClientData &client){
 	std::string body = read_file(full_path);
 	return body;
 }
+
+
+std::string findFirstIndexFile(std::string index, std::string root){
+	std::stringstream ss(index);
+	std::string index_file;
+	struct stat sb;
+	while (ss >> index_file) {
+		std::string path = root + index_file;
+		if (stat(path.c_str(), &sb) == 0)
+			return path;
+	}
+	return "";
+}
+

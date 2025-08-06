@@ -58,7 +58,7 @@ class Parsing_class {
         int getPort();
         int getId();
         bool getError();
-		LocationData& getLocation(const std::string& path);
+		LocationData* getLocation(const std::string& path);
 		const std::string& getErrorPage(int error_code) const;
 		long long getClientMaxBodySize() const;
 		

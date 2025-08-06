@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../../include/class/parsing_class.hpp"
+#include <cstddef>
 
 Parsing_class::Parsing_class() : _port(0), _root("default"), _name("default"), _server_fd(0), _server_id(0), _client_max_body_size(128 * 1024), _error(false), _index("default"){}
 
@@ -33,6 +34,9 @@ void Parsing_class::display(){
 		std::cout << "Location index : " << it->second.index << std::endl;
 		std::cout << "Location fastcgi_pass : " << it->second.fastcgi_pass<< std::endl;
 		std::cout << "Location redirect : " << it->second.redirect << std::endl;
+		for (std::vector<std::string>::iterator itt = it->second.allowed_methods.begin(); itt != it->second.allowed_methods.end(); itt++){
+			std::cout << "Location allowed_methods : " << *itt << std::endl;
+		}
 	}
 	std::cout << std::endl;
 
@@ -79,12 +83,12 @@ void Parsing_class::setClientMaxBodySize(long long size) {
     _client_max_body_size = size;
 }
 
-LocationData& Parsing_class::getLocation(const std::string& path) {
+LocationData* Parsing_class::getLocation(const std::string& path) {
 	std::map<std::string, LocationData>::iterator it = _LocationMap.find(path);
 	if (it == _LocationMap.end()) {
-		throw std::runtime_error("Location not found");
+		return NULL;
 	}
-	return it->second;
+	return &(it->second);
 }
 
 const std::string& Parsing_class::getErrorPage(int error_code) const {

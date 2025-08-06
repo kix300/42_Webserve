@@ -89,7 +89,6 @@ void close_client(int epoll_fd, int client_fd, std::map<int, ClientData> client)
 
 //response.cpp
 void prepare_response(ClientData& client);
-std::string create_body(ClientData &client);
 std::string read_file(const std::string& path);
 
 //parsing/
@@ -127,4 +126,6 @@ bool directoryExists(const std::string &path);
 
 //parsing_response.cpp
 ClientData &parsing_response(ClientData &client);
+std::string findFirstIndexFile(std::string index, std::string root);
+std::string create_body(ClientData &client);
 #endif // !SERVER_HPP

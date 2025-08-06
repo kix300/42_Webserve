@@ -29,15 +29,12 @@ std::string read_file(const std::string& path) {
 }
 
 void prepare_response(ClientData& client) {
-	//ici on regarde la requet du navigateur
-	/*
-	*/
-
 	//construction du body
 	//gestion de root et location
 	std::string body = create_body(client);
 	
 	// Construction des en-têtes
+	// check si le body.size est inferieur a client max body size 
 	client.write_buff = 
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: text/html\r\n"
