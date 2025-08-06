@@ -71,12 +71,46 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
 		} catch (const std::exception &e) {
 			std::cerr << "Error handling client " << client_fd << ": " << e.what() << std::endl;
 
+			//ici soit on creer un body error soit on renvoi l'erreur en fonction de e_mesg // a faire 
 			std::string e_mesg = e.what();
         	size_t colon= e_mesg.find(':');
             e_mesg = trim(e_mesg.substr(0, colon));
-			client.write_buff = "HTTP/1.1 " + e_mesg + " \r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-			client.keep_alive = false;
-			
+			// if (e_mesg.find("403") != std::string::npos && client.server->getErrorPage(403) != ""){ // faut faire un stat sur le path de error page si il existe alors on sort la page sinon non
+			// 	client.write_buff =
+			// 		"HTTP/1.1 " + e_mesg + "\r\n"
+			// 		"Content-Type: text/html\r\n"
+			// 		"Content-Length: " + tostring(read_file(client.server->getErrorPage(403)).size()) + "\r\n"
+			// 		"Connection: close" + "\r\n"
+			// 		"\r\n"
+			// 		+ read_file(client.server->getErrorPage(403));
+			// }
+			// else if (e_mesg.find("404") != std::string::npos && client.server->getErrorPage(404) != ""){ // faut faire un stat sur le path de error page si il existe alors on sort la page sinon non
+			// 	//envoyer header
+			// 	//readfile path
+			// 	client.write_buff =
+			// 		"HTTP/1.1 " + e_mesg + "\r\n"
+			// 		"Content-Type: text/html\r\n"
+			// 		"Content-Length: " + tostring(read_file(client.server->getErrorPage(404)).size()) + "\r\n"
+			// 		"Connection: close" + "\r\n"
+			// 		"\r\n"
+			// 		+ read_file(client.server->getErrorPage(404));
+			// }
+			// else if (e_mesg.find("405") != std::string::npos && client.server->getErrorPage(405) != ""){ // faut faire un stat sur le path de error page si il existe alors on sort la page sinon non
+			// 	//envoyer header
+			// 	//readfile path
+			// 	client.write_buff =
+			// 		"HTTP/1.1 " + e_mesg + "\r\n"
+			// 		"Content-Type: text/html\r\n"
+			// 		"Content-Length: " + tostring(read_file(client.server->getErrorPage(405)).size()) + "\r\n"
+			// 		"Connection: close" + "\r\n"
+			// 		"\r\n"
+			// 		+ read_file(client.server->getErrorPage(405));
+			// }
+			if (sendErrorResponse(client, e_mesg) != 0){
+				client.write_buff = "HTTP/1.1 " + e_mesg + " \r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+				client.keep_alive = false;
+			}
+
 			struct epoll_event ev;
 			ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
 			ev.data.fd = client_fd;
@@ -103,4 +137,33 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
 	if (event.events & (EPOLLERR | EPOLLHUP)){
 		close_client(epoll_fd, client_fd, clients);
 	}
+}
+
+bool errorPageExists(const std::string& path) {
+    struct stat fileStat;
+    return (stat(path.c_str(), &fileStat) == 0 && S_ISREG(fileStat.st_mode));
+}
+
+// Main error handling
+int sendErrorResponse(ClientData& client, const std::string& e_mesg) {
+    int error_code = 0;
+    if (e_mesg.find("403") != std::string::npos) error_code = 403;
+    else if (e_mesg.find("404") != std::string::npos) error_code = 404;
+    else if (e_mesg.find("405") != std::string::npos) error_code = 405;
+
+    if (error_code != 0) {
+        std::string error_page_path = client.server->getErrorPage(error_code);
+        if (!error_page_path.empty() && errorPageExists(error_page_path)) {
+            std::string file_content = read_file(error_page_path);
+            client.write_buff =
+                "HTTP/1.1 " + e_mesg + "\r\n"
+                "Content-Type: text/html\r\n"
+                "Content-Length: " + tostring(file_content.size()) + "\r\n"
+                "Connection: close\r\n"
+                "\r\n" +
+                file_content;
+            return 0;
+        }
+    }
+	return 1;
 }

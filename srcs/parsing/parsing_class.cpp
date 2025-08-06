@@ -91,12 +91,12 @@ LocationData* Parsing_class::getLocation(const std::string& path) {
 	return &(it->second);
 }
 
-const std::string& Parsing_class::getErrorPage(int error_code) const {
+std::string Parsing_class::getErrorPage(int error_code){
     std::map<int, std::string>::const_iterator it = _error_pages.find(error_code);
     if (it == _error_pages.end()) {
-        throw std::runtime_error("Error page not found");
+		return "";
     }
-    return it->second;
+    return (it->second);
 }
 
 long long Parsing_class::getClientMaxBodySize() const {

@@ -79,6 +79,8 @@ void	run_server(int epoll_fd, std::map<int, Parsing_class> serverMap);
 //handle_connection.cpp
 void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData>& clients, Parsing_class &server);
 void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, ClientData>& clients) ;
+bool errorPageExists(const std::string& path);
+int sendErrorResponse(ClientData& client, const std::string& e_mesg);
 
 //handle_inout.cpp
 bool handle_write(int client_fd, ClientData &client);
