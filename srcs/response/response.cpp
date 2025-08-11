@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 11:34:40 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 14:56:56 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/11 15:49:46 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ void prepare_response(ClientData &client)
                 body;
         }
     }
-    if (client.methode == "POST"){
+    else if (client.methode == "POST"){
 
     }
 
