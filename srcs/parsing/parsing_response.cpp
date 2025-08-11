@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 10:40:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 14:31:29 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/11 15:46:42 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,44 @@ static std::string reason_phrase(int code) {
 		case 308: return "Permanent Redirect";
 		default: return "OK";
 	}
+}
+
+// Fonction pour combiner intelligemment root et path en évitant les doublons
+std::string combinePaths(const std::string& root, const std::string& path) {
+	if (root.empty()) return path;
+	if (path.empty()) return root;
+	
+	std::string cleanRoot = root;
+	std::string cleanPath = path;
+	
+	// Enlever le / final du root s'il existe
+	if (!cleanRoot.empty() && cleanRoot[cleanRoot.length() - 1] == '/') {
+		cleanRoot.erase(cleanRoot.length() - 1);
+	}
+	
+	// S'assurer que le path commence par /
+	if (!cleanPath.empty() && cleanPath[0] != '/') {
+		cleanPath = "/" + cleanPath;
+	}
+	
+	// Vérifier si le path est déjà inclus dans le root
+	// Par exemple: root="/www/form" et path="/form/" -> on évite "/www/form/form/"
+	if (!cleanPath.empty() && cleanPath != "/") {
+		// Extraire le dernier segment du root
+		size_t lastSlash = cleanRoot.find_last_of('/');
+		if (lastSlash != std::string::npos) {
+			std::string rootLastSegment = cleanRoot.substr(lastSlash);
+			// Si le path commence par le même segment que la fin du root, on évite le doublon
+			if (cleanPath.length() > rootLastSegment.length() && 
+				cleanPath.substr(0, rootLastSegment.length()) == rootLastSegment) {
+				// Enlever le segment dupliqué du path
+				cleanPath = cleanPath.substr(rootLastSegment.length());
+				if (cleanPath.empty()) cleanPath = "/";
+			}
+		}
+	}
+	
+	return cleanRoot + cleanPath;
 }
 
 std::string create_body(ClientData &client){
@@ -148,13 +186,18 @@ std::string create_body(ClientData &client){
 			return "";
 		}
 		//quel method est autorisée 
-		full_path = findFirstIndexFile(locationserver->index,locationserver->root + locationserver->path); // a changer avec les index
+		std::cout << "index : "<< locationserver->index << std::endl;
+		std::cout << "root : "<< locationserver->root << std::endl;
+		std::cout << "path : "<< locationserver->path << std::endl;
+
+	
+		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path)); // utilise combinePaths pour éviter les doublons
+		std::cout << "full_path:" << full_path << "\n" << std::endl;
+		
 
 		//si autoindex fonctionne
 		//etc
 	}
-
-	std::cout << full_path << std::endl;
 	if (stat(full_path.c_str(), &sb) != 0)
 		throw std::runtime_error("404 Not Found: Bad path");
 
@@ -162,7 +205,6 @@ std::string create_body(ClientData &client){
 	std::string body = read_file(full_path);
 	return body;
 }
-
 
 std::string findFirstIndexFile(std::string index, std::string root){
 	std::stringstream ss(index);

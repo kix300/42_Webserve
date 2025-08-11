@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:20:38 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/29 11:02:44 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/11 15:09:10 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 #define MAX_EVENTS 1024
 #define BUFFER_SIZE 4096
-#define DEBUG true
+#define DEBUG false 
 #include <iostream>
 #include <fstream>
 #include <sstream>
