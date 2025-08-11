@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 12:04:16 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/07 12:42:54 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/11 13:11:50 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ bool handle_write(int client_fd, ClientData & client){
 	ssize_t count = write(client_fd, client.write_buff.data(), client.write_buff.size());
 	if (count == -1){
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			return true; // Not an error, just no data to write right now
+			return true;
 		}
 		perror("write");
 		return false;

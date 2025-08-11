@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:34:17 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/29 16:05:21 by ozen             ###   ########.fr       */
+/*   Updated: 2025/08/11 13:11:34 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 	while (!g_stop_server) {
 		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1); //gerer timeout
 		if (nfds == -1) {
-			if (errno == EINTR) { // Interrupted by signal, check the flag
+			if (errno == EINTR) {
 				continue;
 			}
 			throw std::runtime_error("epoll_wait() failed: " + std::string(strerror(errno)));

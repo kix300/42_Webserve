@@ -6,17 +6,24 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 10:40:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/29 11:45:24 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/11 14:13:01 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/server.hpp"
 
+//Parse le header + body si il ya (Quand body parser on doit le parser en chunk et timout si il est trop long)
 ClientData &parsing_response(ClientData &client){
 
 	std::string request(client.read_buff);
     std::string method, path, http;
 
+	if (request.empty()) {
+		throw std::runtime_error("400 Bad Request: Empty request");
+	}
+	if ((long long)request.size() > client.server->getClientMaxBodySize()) {
+		throw std::runtime_error("413 Payload Too Large: Request size exceeds limit");
+	}
     size_t first_line_end = request.find("\r\n");
     if (first_line_end == std::string::npos) {
         throw std::runtime_error("400 Bad Request: Invalid request line");
@@ -73,12 +80,12 @@ std::string create_body(ClientData &client){
 
 	// si client path est dans une location alors full_path = location + params
 	else if (locationserver != NULL){
-		if (locationserver->root != "" )
-			//ici regarder index 
-			//ici on doit regarder si le path existe
-			//si root existe
-			//quel method est utilisé
-			full_path = findFirstIndexFile(locationserver->index,locationserver->root + locationserver->path); // a changer avec les index
+		if (locationserver->root != "" ){}
+			if (locationserver->redirect != "")
+				full_path = locationserver->redirect;
+			else
+				//quel method est autorisée 
+				full_path = findFirstIndexFile(locationserver->index,locationserver->root + locationserver->path); // a changer avec les index
 
 		//si autoindex fonctionne
 		//etc
