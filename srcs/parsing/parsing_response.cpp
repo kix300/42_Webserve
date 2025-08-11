@@ -6,11 +6,13 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 10:40:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 14:13:01 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/11 14:31:29 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/server.hpp"
+#include <cctype>
+#include <algorithm>
 
 //Parse le header + body si il ya (Quand body parser on doit le parser en chunk et timout si il est trop long)
 ClientData &parsing_response(ClientData &client){
@@ -54,6 +56,18 @@ ClientData &parsing_response(ClientData &client){
 //si c'est dans une location je doit gerer les options
 //ensuite je creer le body et jenvois ca au client
 
+static std::string reason_phrase(int code) {
+	switch (code) {
+		case 200: return "OK";
+		case 301: return "Moved Permanently";
+		case 302: return "Found";
+		case 303: return "See Other";
+		case 307: return "Temporary Redirect";
+		case 308: return "Permanent Redirect";
+		default: return "OK";
+	}
+}
+
 std::string create_body(ClientData &client){
 
 
@@ -80,12 +94,61 @@ std::string create_body(ClientData &client){
 
 	// si client path est dans une location alors full_path = location + params
 	else if (locationserver != NULL){
-		if (locationserver->root != "" ){}
-			if (locationserver->redirect != "")
-				full_path = locationserver->redirect;
-			else
-				//quel method est autorisée 
-				full_path = findFirstIndexFile(locationserver->index,locationserver->root + locationserver->path); // a changer avec les index
+		if (!locationserver->redirect.empty()) {
+			std::string val = trim(locationserver->redirect);
+			std::istringstream iss(val);
+			std::string first;
+			iss >> first;
+			int code = 302; // défaut: redirection
+			std::string rest;
+			std::getline(iss, rest);
+			rest = trim(rest);
+
+			bool numeric = true;
+			if (first.empty()) numeric = false;
+			for (size_t i = 0; i < first.size(); ++i) {
+				if (!std::isdigit(static_cast<unsigned char>(first[i]))) { numeric = false; break; }
+			}
+			if (numeric) {
+				code = std::atoi(first.c_str());
+			} else {
+				rest = val;
+			}
+
+			if (code == 200) {
+				// Réponse 200 avec texte/URL comme corps
+				const std::string body = rest;
+				client.write_buff =
+					"HTTP/1.1 200 OK\r\n"
+					"Content-Type: text/plain\r\n"
+					"Content-Length: " + tostring(body.size()) + "\r\n"
+					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n" +
+					body;
+				return "";
+			}
+
+			if (code >= 300 && code < 400) {
+				// Redirection avec en-tête Location
+				const std::string target = rest;
+				client.write_buff =
+					"HTTP/1.1 " + tostring(code) + " " + reason_phrase(code) + "\r\n"
+					"Location: " + target + "\r\n"
+					"Content-Length: 0\r\n"
+					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
+				return "";
+			}
+
+			// Code non géré: fallback 302
+			const std::string target = rest.empty() ? first : rest;
+			client.write_buff =
+				"HTTP/1.1 302 Found\r\n"
+				"Location: " + target + "\r\n"
+				"Content-Length: 0\r\n"
+				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
+			return "";
+		}
+		//quel method est autorisée 
+		full_path = findFirstIndexFile(locationserver->index,locationserver->root + locationserver->path); // a changer avec les index
 
 		//si autoindex fonctionne
 		//etc

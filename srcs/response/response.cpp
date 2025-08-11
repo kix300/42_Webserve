@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 11:34:40 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 13:40:13 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/11 14:25:53 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,19 +30,22 @@ std::string read_file(const std::string& path) {
 
 void prepare_response(ClientData &client)
 {
-    // construction du body
-    // gestion de root et location
+    // construction du body (peut aussi construire toute la réponse pour redirections)
     std::string body = create_body(client);
-    // Construction des en-têtes
-    client.write_buff =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/html\r\n"
-        "Content-Length: " +
-        tostring(body.size()) + "\r\n"
-                                "Connection: " +
-        (client.keep_alive ? "keep-alive" : "close") + "\r\n"
+
+    // Si create_body a déjà fabriqué la réponse complète (ex: redirect), ne pas écraser
+    if (client.write_buff.size() == 0) {
+        // Construction des en-têtes par défaut 200 OK
+        client.write_buff =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: " +
+            tostring(body.size()) + "\r\n"
+                                    "Connection: " +
+            (client.keep_alive ? "keep-alive" : "close") + "\r\n"
                                                        "\r\n" +
-        body;
+            body;
+    }
 
     size_t request_end = client.read_buff.find("\r\n\r\n");
     if (request_end != std::string::npos)
