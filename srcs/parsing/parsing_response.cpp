@@ -23,8 +23,6 @@ ClientData &parsing_response(ClientData &client){
 	if (request.empty()) {
 		throw std::runtime_error("400 Bad Request: Empty request");
 	}
-	//ici je reagarde la taille totla pas uniquement le body 
-	//a tester avec un truc proche du maximum pour les timout
 	size_t header_end = request.find("\r\n\r\n");
     if (header_end == std::string::npos) {
         throw std::runtime_error("400 Bad Request: Malformed headers");
@@ -42,8 +40,11 @@ ClientData &parsing_response(ClientData &client){
     std::stringstream ss(request_line);
     ss >> method >> path >> http;
 
+	std::cout << request << std::endl;
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
+		if (client.keep_alive)
+			client.read_buff.clear();
 		throw std::runtime_error("501 Not Implemented: Unsupported method");
 	}
 
@@ -59,9 +60,6 @@ ClientData &parsing_response(ClientData &client){
 	return client;
 };
 
-//dans create body, je doit regarder si le root existe, si le path de la methode existe dans root ou dans une location
-//si c'est dans une location je doit gerer les options
-//ensuite je creer le body et jenvois ca au client
 
 static std::string reason_phrase(int code) {
 	switch (code) {
@@ -75,7 +73,7 @@ static std::string reason_phrase(int code) {
 	}
 }
 
-// Fonction pour combiner intelligemment root et path en évitant les doublons
+// Fonction pour combiner root et path en évitant les doublons
 std::string combinePaths(const std::string& root, const std::string& path) {
 	if (root.empty()) return path;
 	if (path.empty()) return root;
@@ -83,27 +81,20 @@ std::string combinePaths(const std::string& root, const std::string& path) {
 	std::string cleanRoot = root;
 	std::string cleanPath = path;
 	
-	// Enlever le / final du root s'il existe
 	if (!cleanRoot.empty() && cleanRoot[cleanRoot.length() - 1] == '/') {
 		cleanRoot.erase(cleanRoot.length() - 1);
 	}
 	
-	// S'assurer que le path commence par /
 	if (!cleanPath.empty() && cleanPath[0] != '/') {
 		cleanPath = "/" + cleanPath;
 	}
 	
-	// Vérifier si le path est déjà inclus dans le root
-	// Par exemple: root="/www/form" et path="/form/" -> on évite "/www/form/form/"
 	if (!cleanPath.empty() && cleanPath != "/") {
-		// Extraire le dernier segment du root
 		size_t lastSlash = cleanRoot.find_last_of('/');
 		if (lastSlash != std::string::npos) {
 			std::string rootLastSegment = cleanRoot.substr(lastSlash);
-			// Si le path commence par le même segment que la fin du root, on évite le doublon
 			if (cleanPath.length() > rootLastSegment.length() && 
 				cleanPath.substr(0, rootLastSegment.length()) == rootLastSegment) {
-				// Enlever le segment dupliqué du path
 				cleanPath = cleanPath.substr(rootLastSegment.length());
 				if (cleanPath.empty()) cleanPath = "/";
 			}
@@ -113,6 +104,9 @@ std::string combinePaths(const std::string& root, const std::string& path) {
 	return cleanRoot + cleanPath;
 }
 
+//dans create body, je doit regarder si le root existe, si le path de la methode existe dans root ou dans une location
+//si c'est dans une location je doit gerer les options
+//ensuite je creer le body et jenvois ca au client
 std::string create_body(ClientData &client){
 
 
@@ -193,11 +187,10 @@ std::string create_body(ClientData &client){
 			return "";
 		}
 		//quel method est autorisée 
+		//si autoindex fonctionne
 		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path)); // utilise combinePaths pour éviter les doublons
 		
 
-		//si autoindex fonctionne
-		//etc
 	}
 	if (!(stat(full_path.c_str(), &sb) == 0))
 		throw std::runtime_error("404 Not Found: Bad path");

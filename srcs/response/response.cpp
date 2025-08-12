@@ -12,6 +12,48 @@
 
 #include "../../include/server.hpp"
 #include <cstdio>
+#include <map>
+#include <sstream>
+
+// Fonction pour décoder les caractères URL-encoded
+std::string urlDecode(const std::string& str) {
+	std::string decoded;
+	for (size_t i = 0; i < str.length(); ++i) {
+		if (str[i] == '+') {
+			decoded += ' ';
+		} else if (str[i] == '%' && i + 2 < str.length()) {
+			int value;
+			std::istringstream is(str.substr(i + 1, 2));
+			if (is >> std::hex >> value) {
+				decoded += static_cast<char>(value);
+				i += 2;
+			} else {
+				decoded += str[i];
+			}
+		} else {
+			decoded += str[i];
+		}
+	}
+	return decoded;
+}
+
+// Fonction pour parser les données de formulaire URL-encoded
+std::map<std::string, std::string> parseFormData(const std::string& body) {
+	std::map<std::string, std::string> data;
+	std::istringstream stream(body);
+	std::string pair;
+	
+	while (std::getline(stream, pair, '&')) {
+		size_t pos = pair.find('=');
+		if (pos != std::string::npos) {
+			std::string key = urlDecode(pair.substr(0, pos));
+			std::string value = urlDecode(pair.substr(pos + 1));
+			data[key] = value;
+		}
+	}
+	
+	return data;
+}
 
 std::string read_file(const std::string &path) {
 	struct stat file_stat;
@@ -44,6 +86,7 @@ void prepare_response(ClientData &client)
 	// il faut gerer la methode POST et DELETE
 	// construction du body (peut aussi construire toute la réponse pour redirections)
 	// regarder si on est uatoriser a faire la methode dans une location
+	
 	if (client.methode == "GET")
 	{
 		std::string body = create_body(client);
@@ -63,9 +106,39 @@ void prepare_response(ClientData &client)
 		}
 	}
 	//POST c'est on recoit un body/header avec des information a recuperer exemple:
+	// on a deja check la taille et recuperer la reponse maintenant il faut afficher cette reponse
 	// name=a&email=a%40gmail.com&message=a
 	else if (client.methode == "POST"){
 		//create_body back
+		if (client.write_buff.size() == 0)
+		{
+			std::map<std::string, std::string> formData = parseFormData(client.client_body);
+			
+			std::string popupContent = "Donnees recues:\\n";
+			for (std::map<std::string, std::string>::iterator it = formData.begin(); it != formData.end(); ++it) {
+				popupContent += it->first + ": " + it->second + "\\n";
+			}
+			
+			std::string body = "<html><body>"
+				"<h1>Page avec popup</h1>"
+				"<script>alert('" + popupContent + "');</script>"
+				"</body></html>";
+
+			client.write_buff =
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Type: text/html\r\n"
+				"Content-Length: " +
+				tostring(body.size()) + "\r\n"
+				"Connection: " +
+				(client.keep_alive ? "keep-alive" : "close") + "\r\n"
+				"\r\n" +
+				body;
+			client.read_buff.clear(); // au cas ou il y a un resend
+		}
+	}
+	// on trouve et tej le fichier 
+	else if (client.methode == "DELETE"){
+
 	}
 
 	size_t request_end = client.read_buff.find("\r\n\r\n");
