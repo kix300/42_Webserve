@@ -23,9 +23,16 @@ ClientData &parsing_response(ClientData &client){
 	if (request.empty()) {
 		throw std::runtime_error("400 Bad Request: Empty request");
 	}
-	if ((long long)request.size() > client.server->getClientMaxBodySize()) {
-		throw std::runtime_error("413 Payload Too Large: Request size exceeds limit");
-	}
+	//ici je reagarde la taille totla pas uniquement le body 
+	//a tester avec un truc proche du maximum pour les timout
+	size_t header_end = request.find("\r\n\r\n");
+    if (header_end == std::string::npos) {
+        throw std::runtime_error("400 Bad Request: Malformed headers");
+    }
+    client.client_body = request.substr(header_end + 4);
+    if ((long long)client.client_body.size() > client.server->getClientMaxBodySize()) {
+        throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
+    }
     size_t first_line_end = request.find("\r\n");
     if (first_line_end == std::string::npos) {
         throw std::runtime_error("400 Bad Request: Invalid request line");
@@ -186,21 +193,14 @@ std::string create_body(ClientData &client){
 			return "";
 		}
 		//quel method est autorisée 
-		std::cout << "index : "<< locationserver->index << std::endl;
-		std::cout << "root : "<< locationserver->root << std::endl;
-		std::cout << "path : "<< locationserver->path << std::endl;
-
-	
 		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path)); // utilise combinePaths pour éviter les doublons
-		std::cout << "full_path:" << full_path << "\n" << std::endl;
 		
 
 		//si autoindex fonctionne
 		//etc
 	}
-	if (stat(full_path.c_str(), &sb) != 0)
+	if (!(stat(full_path.c_str(), &sb) == 0))
 		throw std::runtime_error("404 Not Found: Bad path");
-
 
 	std::string body = read_file(full_path);
 	return body;

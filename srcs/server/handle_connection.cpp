@@ -35,7 +35,7 @@ void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData
 		return;
 	}
 
-	clients[client_fd] = (ClientData){client_fd, std::string(), std::string(), false, std::string(), std::string(), &server};
+	clients[client_fd] = (ClientData){client_fd, std::string(), std::string(), false, std::string(), std::string(), std::string(), &server};
 
 }
 

@@ -49,6 +49,7 @@ struct ClientData {
 	bool keep_alive;
 	std::string methode;
 	std::string path;
+	std::string client_body;
 	Parsing_class *server;
 };
 
