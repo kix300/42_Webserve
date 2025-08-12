@@ -13,6 +13,7 @@
 #include "../../include/server.hpp"
 #include <cctype>
 #include <algorithm>
+#include <cstdlib>
 
 //Parse le header + body si il ya (Quand body parser on doit le parser en chunk et timout si il est trop long)
 ClientData &parsing_response(ClientData &client){
@@ -133,6 +134,16 @@ std::string create_body(ClientData &client){
 
 	// si client path est dans une location alors full_path = location + params
 	else if (locationserver != NULL){
+		int count = 0;
+		for (std::vector<std::string>::iterator it = locationserver->allowed_methods.begin(); it < locationserver->allowed_methods.end(); it++){
+			std::cout <<"methode allowed in this location : " << *it << std::endl;
+			if (client.methode == *it)
+				count++;
+			std::cout << count << std::endl;
+		}
+		if (count == 0)
+			throw std::runtime_error("405 Methode Not Allowed: Bad Methode");
+
 		if (!locationserver->redirect.empty()) {
 			std::string val = trim(locationserver->redirect);
 			std::istringstream iss(val);
