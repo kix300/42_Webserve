@@ -15,7 +15,10 @@
 
 Parsing_class::Parsing_class() : _port(0), _root("default"), _name("default"), _server_fd(0), _server_id(0), _client_max_body_size(128 * 1024), _error(false), _index("default"){}
 
-Parsing_class::~Parsing_class(){}
+Parsing_class::~Parsing_class(){
+	// Close all client connections when the server is destroyed
+	closeAllClients(-1);
+}
 
 void Parsing_class::display(){
 	std::cout << "server_id : " <<  _server_id << std::endl;
@@ -55,6 +58,8 @@ void Parsing_class::clear(){
 	_index = "default";
 	_error_pages.clear();
 	_LocationMap.clear();
+	// Close all clients when clearing the server
+	closeAllClients(-1);
 }
 
 void Parsing_class::setPort(int port){ _port = port; }
@@ -125,5 +130,40 @@ std::string Parsing_class::findFirstIndexFile(){
     	return path;
     }
 	return "";
+}
+
+// Client management methods implementation
+void Parsing_class::addClient(int client_fd, const ClientData& client) {
+    _clients[client_fd] = client;
+}
+
+void Parsing_class::removeClient(int client_fd) {
+    std::map<int, ClientData>::iterator it = _clients.find(client_fd);
+    if (it != _clients.end()) {
+        close(client_fd);
+        _clients.erase(it);
+    }
+}
+
+ClientData* Parsing_class::getClient(int client_fd) {
+    std::map<int, ClientData>::iterator it = _clients.find(client_fd);
+    if (it != _clients.end()) {
+        return &(it->second);
+    }
+    return NULL;
+}
+
+void Parsing_class::closeAllClients(int epoll_fd) {
+    for (std::map<int, ClientData>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        if (epoll_fd != -1) {
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, it->first, NULL);
+        }
+        close(it->first);
+    }
+    _clients.clear();
+}
+
+std::map<int, ClientData>& Parsing_class::getClients() {
+    return _clients;
 }
 

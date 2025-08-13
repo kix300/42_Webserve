@@ -69,7 +69,6 @@ int setup_epoll(std::map<int, Parsing_class> serverMap){
 }
 
 void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
-	std::map<int,  ClientData> clients;
 	struct epoll_event events[MAX_EVENTS];
 
 	while (!g_stop_server) {
@@ -85,13 +84,25 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 			for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 				if (events[i].data.fd == it->second.getFd()) {
 					is_server_socket = true;
-					handle_new_connection(epoll_fd, it->second.getFd(), clients, it->second);
+					handle_new_connection(epoll_fd, it->second.getFd(), it->second);
 					break;
 				}
 			}
 			if (!is_server_socket){
-				handle_client_event(epoll_fd, events[i], clients);
+				// Find which server this client belongs to
+				for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+					ClientData* client = it->second.getClient(events[i].data.fd);
+					if (client != NULL) {
+						handle_client_event(epoll_fd, events[i], *client, it->second);
+						break;
+					}
+				}
 			}
 		}
+	}
+
+	// Close all clients for all servers when shutting down
+	for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+		it->second.closeAllClients(epoll_fd);
 	}
 }

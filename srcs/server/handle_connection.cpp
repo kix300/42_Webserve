@@ -13,7 +13,7 @@
 #include "../../include/server.hpp"
 
 // on ajoute notre nouveau client dans notre map en non bloquant
-void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData>& clients, Parsing_class &server) {
+void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server) {
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);
 
@@ -35,27 +35,21 @@ void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData
 		return;
 	}
 
-	clients[client_fd] = (ClientData){client_fd, std::string(), std::string(), false, std::string(), std::string(), std::string(), &server};
-
+	ClientData new_client = {client_fd, std::string(), std::string(), false, std::string(), std::string(), std::string(), &server};
+	server.addClient(client_fd, new_client);
 }
 
 //ici on va regarder les events, les clients fd et le fd de epoll pour voir si c'est inout 
 //ensuite si c'est in alors on read
 //si c'est out alors on write
-void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, ClientData>& clients) {
+void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& client, Parsing_class& server) {
 
 	int client_fd = event.data.fd;
-	std::map<int, ClientData>::iterator it = clients.find(client_fd);
-    if (it == clients.end()) {
-        close(client_fd);
-        return;
-    }
-    ClientData& client = it->second;
 	if (event.events & EPOLLIN){
 		try {
 			// On lit le client
 			if (!handle_read(client_fd, client)){
-				close_client(epoll_fd, client_fd, clients);
+				close_client(epoll_fd, client_fd, server);
 				return;
 			}
 
@@ -88,10 +82,9 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
 	}
 
 	//on gere le write	
-	// <!> Peutetre erreur sur le write dans le cas dun post
 	if (event.events & EPOLLOUT){
 		if (!handle_write(client_fd, client)){
-			close_client(epoll_fd, client_fd, clients);
+			close_client(epoll_fd, client_fd, server);
 			return;
 		}
 		if (client.write_buff.empty()){
@@ -100,13 +93,13 @@ void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, C
 			ev.data.fd = client_fd;
 			epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &ev);
 			if (!client.keep_alive){
-				close_client(epoll_fd, client_fd, clients);
+				close_client(epoll_fd, client_fd, server);
 			}
 		}
 	}
 
 	if (event.events & (EPOLLERR | EPOLLHUP)){
-		close_client(epoll_fd, client_fd, clients);
+		close_client(epoll_fd, client_fd, server);
 	}
 }
 

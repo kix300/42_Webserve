@@ -78,8 +78,8 @@ int	setup_epoll(std::map<int, Parsing_class> serverMap);
 void	run_server(int epoll_fd, std::map<int, Parsing_class> serverMap);
 
 //handle_connection.cpp
-void handle_new_connection(int epoll_fd, int server_fd, std::map<int, ClientData>& clients, Parsing_class &server);
-void handle_client_event(int epoll_fd, const epoll_event& event, std::map<int, ClientData>& clients) ;
+void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server);
+void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& client, Parsing_class& server) ;
 bool errorPageExists(const std::string& path);
 int sendErrorResponse(ClientData& client, const std::string& e_mesg);
 
@@ -88,11 +88,13 @@ bool handle_write(int client_fd, ClientData &client);
 bool handle_read(int client_fd, ClientData &client);
 
 //utils.cpp
-void close_client(int epoll_fd, int client_fd, std::map<int, ClientData> client);
+void close_client(int epoll_fd, int client_fd, Parsing_class& server);
+std::map<std::string, std::string> parseFormData(const std::string& body);
+std::string urlDecode(const std::string& str);
+std::string read_file(const std::string& path);
 
 //response.cpp
 void prepare_response(ClientData& client);
-std::string read_file(const std::string& path);
 void methode_get(ClientData& client);
 void methode_post(ClientData& client);
 void methode_delete(ClientData& client);

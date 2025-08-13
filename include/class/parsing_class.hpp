@@ -20,6 +20,7 @@
 //savoir la localisation des fichiers plusieur type
 //savoir le nom du domaine
 struct LocationData;
+struct ClientData;
 class Parsing_class {
     //variable qui sera donner a server class
     protected:
@@ -33,6 +34,7 @@ class Parsing_class {
 		bool _error;
 		std::string _index;
 		std::map<std::string, LocationData> _LocationMap;
+		std::map<int, ClientData> _clients;
 
         // fonction de parsing
         public:
@@ -61,6 +63,13 @@ class Parsing_class {
 		LocationData* getLocation(const std::string& path);
 		std::string getErrorPage(int error_code) ;
 		long long getClientMaxBodySize() const;
+
+		// Client management methods
+		void addClient(int client_fd, const ClientData& client);
+		void removeClient(int client_fd);
+		ClientData* getClient(int client_fd);
+		void closeAllClients(int epoll_fd);
+		std::map<int, ClientData>& getClients();
 		
 
         void clear();

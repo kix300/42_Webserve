@@ -75,6 +75,8 @@ int main(int ac, char **av)
 		if (epoll_fd != -1)
 			close(epoll_fd);
 		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+			// Close all client connections for this server
+			it->second.closeAllClients(epoll_fd);
 			if (it->second.getFd() > 0)
 				close(it->second.getFd());
 		}
@@ -83,12 +85,14 @@ int main(int ac, char **av)
 
 	// Cleanup after the server loop has finished
 	std::cout << "\nServer shutting down gracefully..." << std::endl;
+	if (epoll_fd != -1)
+		close(epoll_fd);
 	for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+		// Close all client connections for this server
+		it->second.closeAllClients(epoll_fd);
 		if (it->second.getFd() > 0)
 			close(it->second.getFd());
 	}
-	if (epoll_fd != -1)
-		close(epoll_fd);
 	std::cout << "Server stopped." << std::endl;
 
 	return 0;
