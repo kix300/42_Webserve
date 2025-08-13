@@ -189,10 +189,44 @@ std::string create_body(ClientData &client){
 		}
 		//quel method est autorisée 
 		//si autoindex fonctionne
-		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path)); // utilise combinePaths pour éviter les doublons
+		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
 		
+		// Si aucun index file n'est trouvé, on vérifie si c'est un répertoire et si autoindex est activé
+		if (full_path.empty()) {
+			std::string directory_path = combinePaths(locationserver->root, locationserver->path);
+			struct stat dir_stat;
+			if (stat(directory_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+				if (locationserver->autoindex) {
+					std::string body = generateDirectoryListing(directory_path, client.path);
+					return body;
+				} else {
+					throw std::runtime_error("403 Forbidden: Directory listing disabled");
+				}
+			} else {
+				throw std::runtime_error("404 Not Found: No index file found");
+			}
+		}
 
+	} else {
+		// Pas de location spécifique, utilisation des paramètres du serveur par défaut
+		if (client.path == "/") {
+			full_path = client.server->findFirstIndexFile();
+		} else {
+			full_path = client.server->getRoot() + client.path;
+		}
+		
+		// Si c'est un répertoire et qu'aucun index n'est trouvé
+		struct stat dir_stat;
+		if (stat(full_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+			std::string index_path = findFirstIndexFile(client.server->getIndex(), full_path + "/");
+			if (index_path.empty()) {
+				// Pas d'autoindex par défaut au niveau serveur - peut être ajouté plus tard
+				throw std::runtime_error("403 Forbidden: Directory listing disabled");
+			}
+			full_path = index_path;
+		}
 	}
+	
 	if (!(stat(full_path.c_str(), &sb) == 0))
 		throw std::runtime_error("404 Not Found: Bad path");
 
