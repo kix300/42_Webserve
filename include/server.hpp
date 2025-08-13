@@ -93,6 +93,10 @@ void close_client(int epoll_fd, int client_fd, std::map<int, ClientData> client)
 //response.cpp
 void prepare_response(ClientData& client);
 std::string read_file(const std::string& path);
+void methode_get(ClientData& client);
+void methode_post(ClientData& client);
+void methode_delete(ClientData& client);
+void check_location_methode(ClientData& client);
 
 //parsing/
 // parse_server.cpp
