@@ -60,27 +60,63 @@ void methode_post(ClientData& client){
 	//create_body back
 	if (client.write_buff.size() == 0)
 	{
-		std::map<std::string, std::string> formData = parseFormData(client.client_body);
+		// Vérifier si c'est un upload de fichier (multipart/form-data)
+		if (isMultipartFormData(client.read_buff)) {
+				if (handleFileUpload(client)) {
+					// Succès de l'upload - extraire le nom du fichier des headers
+					std::string body_content = client.client_body;
+					size_t headers_end = body_content.find("\r\n\r\n");
+					std::string filename = "unknown";
+					if (headers_end != std::string::npos) {
+						std::string headers = body_content.substr(0, headers_end);
+						filename = extractFileName(headers);
+						if (filename.empty()) filename = "unknown";
+					}
+					
+					std::string body = "<html><body>"
+						"<h1>Upload Réussi!</h1>"
+						"<p>Le fichier a été uploadé avec succès.</p>"
+						"<p>Nom du fichier: " + filename + "</p>"
+						"<p>Taille: " + tostring(client.client_body.size()) + " bytes</p>"
+						"<script>alert('Fichier uploadé avec succès: " + filename + "');</script>"
+						"<a href='/upload/'>Voir les fichiers uploadés</a><br>"
+						"<a href='/methode/'>Retour à l'interface</a>"
+						"</body></html>";
 
-		std::string popupContent = "Donnees recues:\\n";
-		for (std::map<std::string, std::string>::iterator it = formData.begin(); it != formData.end(); ++it) {
-			popupContent += it->first + ": " + it->second + "\\n";
+					client.write_buff =
+						"HTTP/1.1 200 OK\r\n"
+						"Content-Type: text/html\r\n"
+						"Content-Length: " +
+						tostring(body.size()) + "\r\n"
+						"Connection: " +
+						(client.keep_alive ? "keep-alive" : "close") + "\r\n"
+						"\r\n" +
+						body;
+				}
+		} else {
+			// Traitement normal des formulaires (données URL-encoded)
+			std::map<std::string, std::string> formData = parseFormData(client.client_body);
+
+			std::string popupContent = "Donnees recues:\\n";
+			for (std::map<std::string, std::string>::iterator it = formData.begin(); it != formData.end(); ++it) {
+				popupContent += it->first + ": " + it->second + "\\n";
+			}
+
+			std::string body = "<html><body>"
+				"<h1>Page avec popup</h1>"
+				"<script>alert('" + popupContent + "');</script>"
+				"</body></html>";
+
+			client.write_buff =
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Type: text/html\r\n"
+				"Content-Length: " +
+				tostring(body.size()) + "\r\n"
+				"Connection: " +
+				(client.keep_alive ? "keep-alive" : "close") + "\r\n"
+				"\r\n" +
+				body;
 		}
-
-		std::string body = "<html><body>"
-			"<h1>Page avec popup</h1>"
-			"<script>alert('" + popupContent + "');</script>"
-			"</body></html>";
-
-		client.write_buff =
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/html\r\n"
-			"Content-Length: " +
-			tostring(body.size()) + "\r\n"
-			"Connection: " +
-			(client.keep_alive ? "keep-alive" : "close") + "\r\n"
-			"\r\n" +
-			body;
 		client.read_buff.clear(); // au cas ou il y a un resend
 	}
 }

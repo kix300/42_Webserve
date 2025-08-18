@@ -95,6 +95,12 @@ std::string read_file(const std::string& path);
 std::string generateDirectoryListing(const std::string& directory_path, const std::string& request_path);
 std::string read_file_or_directory(const std::string& path, const std::string& request_path, bool autoindex_enabled);
 
+// upload.cp
+std::string extractBoundary(const std::string& request);
+bool isMultipartFormData(const std::string& request);
+std::string extractFileName(const std::string& contentDisposition);
+bool handleFileUpload(ClientData& client);
+
 //response.cpp
 void prepare_response(ClientData& client);
 void methode_get(ClientData& client);
