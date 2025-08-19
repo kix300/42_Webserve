@@ -107,6 +107,7 @@ void methode_post(ClientData& client);
 void methode_delete(ClientData& client);
 void check_location_methode(ClientData& client);
 
+
 //parsing/
 // parse_server.cpp
 std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, std::map<int, Parsing_class> serverMap);
@@ -144,4 +145,5 @@ bool directoryExists(const std::string &path);
 ClientData &parsing_response(ClientData &client);
 std::string findFirstIndexFile(std::string index, std::string root);
 std::string create_body(ClientData &client);
+std::string locationinserver(LocationData *locationserver, ClientData client, std::string full_path);
 #endif // !SERVER_HPP

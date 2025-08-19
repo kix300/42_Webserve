@@ -144,35 +144,8 @@ std::string combinePaths(const std::string& root, const std::string& path) {
 	return cleanRoot + cleanPath;
 }
 
-//dans create body, je doit regarder si le root existe, si le path de la methode existe dans root ou dans une location
-//si c'est dans une location je doit gerer les options
-//ensuite je creer le body et jenvois ca au client
-std::string create_body(ClientData &client){
 
-
-	struct stat sb;
-	bool is_http_1_1 = (client.read_buff.find("HTTP/1.1") != std::string::npos);
-	bool has_keepalive = (client.read_buff.find("Connection: keep-alive") != std::string::npos);
-	bool has_close = (client.read_buff.find("Connection: close") != std::string::npos);
-
-	// Règles HTTP/1.1 pour keep-alive (par défaut activé en 1.1)
-	client.keep_alive = is_http_1_1 ? !has_close : has_keepalive;
-
-	if (DEBUG){
-		client.server->display();
-	}
-
-
-	if (client.server->getRoot() == "default")
-		throw std::runtime_error("500 Internal Server Error: Bad root");
-	std::string full_path;
-	LocationData *locationserver = client.server->getLocation(client.path);
-	full_path = client.server->getRoot() + client.path;
-	if (client.path == "/")
-		full_path = client.server->findFirstIndexFile();
-
-		// si client path est dans une location alors full_path = location + params
-	else if (locationserver != NULL){
+std::string locationinserver(LocationData *locationserver, ClientData client, std::string full_path){
 		if (!locationserver->redirect.empty()) {
 			std::string val = trim(locationserver->redirect);
 			std::istringstream iss(val);
@@ -226,6 +199,7 @@ std::string create_body(ClientData &client){
 				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
 			return "";
 		}
+
 		//quel method est autorisée 
 		//si autoindex fonctionne
 		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
@@ -245,7 +219,35 @@ std::string create_body(ClientData &client){
 				throw std::runtime_error("404 Not Found: No index file found");
 			}
 		}
+	return full_path;
+}
+//dans create body, je doit regarder si le root existe, si le path de la methode existe dans root ou dans une location
+//si c'est dans une location je doit gerer les options
+//ensuite je creer le body et jenvois ca au client
+std::string create_body(ClientData &client){
+	struct stat sb;
+	bool is_http_1_1 = (client.read_buff.find("HTTP/1.1") != std::string::npos);
+	bool has_keepalive = (client.read_buff.find("Connection: keep-alive") != std::string::npos);
+	bool has_close = (client.read_buff.find("Connection: close") != std::string::npos);
 
+	// Règles HTTP/1.1 pour keep-alive (par défaut activé en 1.1)
+	client.keep_alive = is_http_1_1 ? !has_close : has_keepalive;
+
+	if (DEBUG){
+		client.server->display();
+	}
+	if (client.server->getRoot() == "default")
+		throw std::runtime_error("500 Internal Server Error: Bad root");
+	std::string full_path;
+	LocationData *locationserver = client.server->getLocation(client.path);
+	full_path = client.server->getRoot() + client.path;
+	if (client.path == "/")
+		full_path = client.server->findFirstIndexFile();
+
+		// si client path est dans une location alors full_path = location + params
+	else if (locationserver != NULL){
+		full_path = locationinserver(locationserver, client, full_path);
+		return full_path;
 	} else {
 		// Pas de location spécifique, utilisation des paramètres du serveur par défaut
 		if (client.path == "/") {
