@@ -67,7 +67,6 @@ struct LocationData {
 	std::map<std::string, std::string> add_header;
 
 	LocationData() : autoindex(false) {}
-
 };
 
 

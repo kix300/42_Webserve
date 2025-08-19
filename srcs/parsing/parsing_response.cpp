@@ -27,26 +27,65 @@ ClientData &parsing_response(ClientData &client){
 	size_t header_end = request.find("\r\n\r\n");
     if (header_end == std::string::npos) {
         throw std::runtime_error("400 Bad Request: Malformed headers");
-    }
-    client.client_body = request.substr(header_end + 4);
-    if ((long long)client.client_body.size() > client.server->getClientMaxBodySize()) {
-        throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
-    }
-    size_t first_line_end = request.find("\r\n");
-    if (first_line_end == std::string::npos) {
-        throw std::runtime_error("400 Bad Request: Invalid request line");
-    }
+	}
 
-    std::string request_line = request.substr(0, first_line_end);
-    std::stringstream ss(request_line);
-    ss >> method >> path >> http;
+	// Extraction du corps de la requête
+	client.client_body = request.substr(header_end + 4);
+
+	// Extraction des headers pour vérifier Content-Length
+	std::string headers = request.substr(0, header_end);
+
+	// Recherche du header Content-Length
+	size_t content_length_pos = headers.find("Content-Length:");
+	if (content_length_pos == std::string::npos) {
+		content_length_pos = headers.find("content-length:");
+	}
+
+	long long content_length = -1;
+	if (content_length_pos != std::string::npos) {
+		size_t value_start = headers.find(':', content_length_pos) + 1;
+		size_t value_end = headers.find('\r', value_start);
+		if (value_end == std::string::npos) {
+			value_end = headers.find('\n', value_start);
+		}
+		if (value_end != std::string::npos) {
+			std::string content_length_str = headers.substr(value_start, value_end - value_start);
+			// Trim whitespace
+			size_t start = content_length_str.find_first_not_of(" \t");
+			size_t end = content_length_str.find_last_not_of(" \t");
+			if (start != std::string::npos && end != std::string::npos) {
+				content_length_str = content_length_str.substr(start, end - start + 1);
+				content_length = std::atoll(content_length_str.c_str());
+			}
+		}
+	}
+
+	// Vérification de la taille du corps contre Content-Length
+	if (content_length >= 0 && (long long)client.client_body.size() != content_length) {
+		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
+		// throw std::runtime_error("400 Bad Request: Body size doesn't match Content-Length");
+	}
+
+	// Vérification contre la limite du serveur (utilise Content-Length si disponible, sinon taille réelle)
+	long long size_to_check = (content_length >= 0) ? content_length : (long long)client.client_body.size();
+	if (size_to_check > client.server->getClientMaxBodySize()) {
+		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
+	}
+	size_t first_line_end = request.find("\r\n");
+	if (first_line_end == std::string::npos) {
+		throw std::runtime_error("400 Bad Request: Invalid request line");
+	}
+
+	std::string request_line = request.substr(0, first_line_end);
+	std::stringstream ss(request_line);
+	ss >> method >> path >> http;
 
 	std::cout << request << std::endl;
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
 		if (client.keep_alive)
 			client.read_buff.clear();
-		throw std::runtime_error("501 Not Implemented: Unsupported method");
+		throw std::runtime_error("405 Not Implemented: Unsupported method");
 	}
 
 	if (path.empty() || http.empty())
@@ -56,8 +95,8 @@ ClientData &parsing_response(ClientData &client){
 
 	if (DEBUG)
 		std::cout << method  << " " << path << " " << http << std::endl;
-    client.methode = method;
-    client.path = path;
+	client.methode = method;
+	client.path = path;
 	return client;
 };
 
@@ -78,18 +117,18 @@ static std::string reason_phrase(int code) {
 std::string combinePaths(const std::string& root, const std::string& path) {
 	if (root.empty()) return path;
 	if (path.empty()) return root;
-	
+
 	std::string cleanRoot = root;
 	std::string cleanPath = path;
-	
+
 	if (!cleanRoot.empty() && cleanRoot[cleanRoot.length() - 1] == '/') {
 		cleanRoot.erase(cleanRoot.length() - 1);
 	}
-	
+
 	if (!cleanPath.empty() && cleanPath[0] != '/') {
 		cleanPath = "/" + cleanPath;
 	}
-	
+
 	if (!cleanPath.empty() && cleanPath != "/") {
 		size_t lastSlash = cleanRoot.find_last_of('/');
 		if (lastSlash != std::string::npos) {
@@ -101,7 +140,7 @@ std::string combinePaths(const std::string& root, const std::string& path) {
 			}
 		}
 	}
-	
+
 	return cleanRoot + cleanPath;
 }
 
@@ -123,7 +162,7 @@ std::string create_body(ClientData &client){
 		client.server->display();
 	}
 
-	
+
 	if (client.server->getRoot() == "default")
 		throw std::runtime_error("500 Internal Server Error: Bad root");
 	std::string full_path;
@@ -132,7 +171,7 @@ std::string create_body(ClientData &client){
 	if (client.path == "/")
 		full_path = client.server->findFirstIndexFile();
 
-	// si client path est dans une location alors full_path = location + params
+		// si client path est dans une location alors full_path = location + params
 	else if (locationserver != NULL){
 		if (!locationserver->redirect.empty()) {
 			std::string val = trim(locationserver->redirect);
@@ -190,7 +229,7 @@ std::string create_body(ClientData &client){
 		//quel method est autorisée 
 		//si autoindex fonctionne
 		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
-		
+
 		// Si aucun index file n'est trouvé, on vérifie si c'est un répertoire et si autoindex est activé
 		if (full_path.empty()) {
 			std::string directory_path = combinePaths(locationserver->root, locationserver->path);
@@ -214,7 +253,7 @@ std::string create_body(ClientData &client){
 		} else {
 			full_path = client.server->getRoot() + client.path;
 		}
-		
+
 		// Si c'est un répertoire et qu'aucun index n'est trouvé
 		struct stat dir_stat;
 		if (stat(full_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
@@ -226,7 +265,7 @@ std::string create_body(ClientData &client){
 			full_path = index_path;
 		}
 	}
-	
+
 	if (!(stat(full_path.c_str(), &sb) == 0))
 		throw std::runtime_error("404 Not Found: Bad path");
 

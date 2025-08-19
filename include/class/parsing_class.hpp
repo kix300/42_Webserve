@@ -23,7 +23,7 @@ struct LocationData;
 struct ClientData;
 class Parsing_class {
     //variable qui sera donner a server class
-    protected:
+    private:
         int _port;
         std::string _root;
         std::string _name;
