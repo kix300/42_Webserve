@@ -42,7 +42,7 @@ bool handle_read(int client_fd, ClientData & client){
 	ssize_t count = read(client_fd, buffer, BUFFER_SIZE);
 	if (count == -1){
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			return true; // Not an error, just no data to read right now
+			return true;
 		}
 		perror("read");
 		return false;

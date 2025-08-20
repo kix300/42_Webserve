@@ -26,7 +26,6 @@ std::string read_file(const std::string &path) {
 		throw std::runtime_error("404 Not Found: File does not exist");
 	}
 
-	//autoindex ?!
 	if (S_ISDIR(file_stat.st_mode)) {
 		throw std::runtime_error("404 Not Found: Path is a directory");
 	}
@@ -68,7 +67,6 @@ std::string urlDecode(const std::string& str) {
 	return decoded;
 }
 
-// Fonction pour parser les données de formulaire URL-encoded
 std::map<std::string, std::string> parseFormData(const std::string& body) {
 	std::map<std::string, std::string> data;
 	std::istringstream stream(body);
@@ -109,7 +107,6 @@ std::string generateDirectoryListing(const std::string& directory_path, const st
 	html += "<thead>\n<tr><th>Name</th><th>Last modified</th><th>Size</th></tr>\n</thead>\n";
 	html += "<tbody>\n";
 
-	// Add parent directory link if not root
 	if (request_path != "/" && request_path != "") {
 		html += "<tr>\n";
 		std::string parent_path = request_path;
@@ -131,7 +128,6 @@ std::string generateDirectoryListing(const std::string& directory_path, const st
 	std::vector<std::string> directories;
 	std::vector<std::string> files;
 
-	// Read directory entries
 	while ((entry = readdir(dir)) != NULL) {
 		std::string name = entry->d_name;
 		if (name == "." || name == "..") {
@@ -155,11 +151,9 @@ std::string generateDirectoryListing(const std::string& directory_path, const st
 	}
 	closedir(dir);
 
-	// Sort directories and files
 	std::sort(directories.begin(), directories.end());
 	std::sort(files.begin(), files.end());
 
-	// Add directories first
 	for (std::vector<std::string>::iterator it = directories.begin(); it != directories.end(); ++it) {
 		std::string name = *it;
 		std::string full_path = directory_path;
@@ -186,7 +180,6 @@ std::string generateDirectoryListing(const std::string& directory_path, const st
 		}
 	}
 
-	// Add files
 	for (std::vector<std::string>::iterator it = files.begin(); it != files.end(); ++it) {
 		std::string name = *it;
 		std::string full_path = directory_path;
@@ -248,7 +241,6 @@ std::string read_file_or_directory(const std::string& path, const std::string& r
 		}
 	}
 
-	// It's a file, use the original read_file function
 	std::ifstream file(path.c_str(), std::ios::binary);
 	if (!file.is_open()) {
 		throw std::runtime_error("404 Not Found: Could not open file");

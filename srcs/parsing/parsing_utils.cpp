@@ -38,14 +38,3 @@ bool isValidPort(const std::string &portStr)
     return (port > 0 && port <= 65535);
 }
 
-
-
-bool directoryExists(const std::string &path)
-{
-    struct stat info;
-    if (stat(path.c_str(), &info) != 0)
-        return false;
-    return (info.st_mode & S_IFDIR);
-}
-
-

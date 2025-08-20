@@ -12,6 +12,7 @@
 
 #include "../../include/server.hpp"
 
+// count_nginx_servers : ne compte pas que le nombre de server mdrr c'est de la ou ce lance le parsing de tous le fichier conf
 std::map<int, Parsing_class> count_nginx_servers(const std::string &filename, std::map<int, Parsing_class> serverMap)
 {
     std::ifstream file(filename.c_str());

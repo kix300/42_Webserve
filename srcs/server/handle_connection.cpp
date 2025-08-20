@@ -39,15 +39,13 @@ void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server) {
 	server.addClient(client_fd, new_client);
 }
 
-//ici on va regarder les events, les clients fd et le fd de epoll pour voir si c'est inout 
-//ensuite si c'est in alors on read
-//si c'est out alors on write
+// handle_client_event : Gestion des événements pour un client, si in alors on parse et prepare une responce
+// sinon on gere le write
 void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& client, Parsing_class& server) {
 
 	int client_fd = event.data.fd;
 	if (event.events & EPOLLIN){
 		try {
-			// On lit le client
 			if (!handle_read(client_fd, client)){
 				close_client(epoll_fd, client_fd, server);
 				return;
@@ -64,8 +62,6 @@ void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& cli
 			}
 		} catch (const std::exception &e) {
 			std::cerr << "Error handling client " << client_fd << ": " << e.what() << std::endl;
-
-			//ici soit on creer un body error soit on renvoi l'erreur en fonction de e_mesg // a faire 
 			std::string e_mesg = e.what();
         	size_t colon= e_mesg.find(':');
             e_mesg = trim(e_mesg.substr(0, colon));
@@ -80,8 +76,6 @@ void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& cli
 			epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &ev);
 		}
 	}
-
-	//on gere le write	
 	if (event.events & EPOLLOUT){
 		if (!handle_write(client_fd, client)){
 			close_client(epoll_fd, client_fd, server);
@@ -108,7 +102,7 @@ bool errorPageExists(const std::string& path) {
     return (stat(path.c_str(), &fileStat) == 0 && S_ISREG(fileStat.st_mode));
 }
 
-// Main error handling
+// sendErrorResponse : Gestion des principales pages d'erreurs
 int sendErrorResponse(ClientData& client, const std::string& e_mesg) {
     int error_code = 0;
     if (e_mesg.find("403") != std::string::npos) error_code = 403;

@@ -15,48 +15,20 @@
 #include <cstring>
 #include <errno.h>
 
-// Vérifie si une requête doit être traitée par CGI
 bool isCGIRequest(const std::string& path, const LocationData* location) {
-    if (DEBUG) {
-        std::cout << "DEBUG: Checking CGI for path: " << path << std::endl;
-    }
-    
     if (!location || location->cgi_extensions.empty()) {
-        if (DEBUG) {
-            std::cout << "DEBUG: No location or empty CGI extensions" << std::endl;
-        }
         return false;
     }
     
-    // Trouve l'extension du fichier
     size_t dot_pos = path.find_last_of('.');
     if (dot_pos == std::string::npos) {
-        if (DEBUG) {
-            std::cout << "DEBUG: No file extension found" << std::endl;
-        }
         return false;
     }
     
     std::string extension = path.substr(dot_pos);
-    if (DEBUG) {
-        std::cout << "DEBUG: File extension: " << extension << std::endl;
-        std::cout << "DEBUG: Available CGI extensions: ";
-        for (std::map<std::string, std::string>::const_iterator it = location->cgi_extensions.begin(); 
-             it != location->cgi_extensions.end(); ++it) {
-            std::cout << it->first << " ";
-        }
-        std::cout << std::endl;
-    }
-    
-    bool is_cgi = location->cgi_extensions.find(extension) != location->cgi_extensions.end();
-    if (DEBUG) {
-        std::cout << "DEBUG: Is CGI request: " << (is_cgi ? "YES" : "NO") << std::endl;
-    }
-    
-    return is_cgi;
+    return location->cgi_extensions.find(extension) != location->cgi_extensions.end();
 }
 
-// Obtient l'interpréteur pour une extension donnée
 std::string getCGIInterpreter(const std::string& file_extension, const LocationData* location) {
     if (!location) {
         return "";

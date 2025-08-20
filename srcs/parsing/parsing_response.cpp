@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <cstdlib>
 
-//Parse le header + body si il ya (Quand body parser on doit le parser en chunk et timout si il est trop long)
+//parsing_response : Parse le header + body si il ya (Quand body parser on doit le parser en chunk et timout si il est trop long)
 ClientData &parsing_response(ClientData &client){
 
 	std::string request(client.read_buff);
@@ -28,14 +28,10 @@ ClientData &parsing_response(ClientData &client){
     if (header_end == std::string::npos) {
         throw std::runtime_error("400 Bad Request: Malformed headers");
 	}
-
-	// Extraction du corps de la requête
+e
 	client.client_body = request.substr(header_end + 4);
-
-	// Extraction des headers pour vérifier Content-Length
 	std::string headers = request.substr(0, header_end);
 
-	// Recherche du header Content-Length
 	size_t content_length_pos = headers.find("Content-Length:");
 	if (content_length_pos == std::string::npos) {
 		content_length_pos = headers.find("content-length:");
@@ -50,7 +46,6 @@ ClientData &parsing_response(ClientData &client){
 		}
 		if (value_end != std::string::npos) {
 			std::string content_length_str = headers.substr(value_start, value_end - value_start);
-			// Trim whitespace
 			size_t start = content_length_str.find_first_not_of(" \t");
 			size_t end = content_length_str.find_last_not_of(" \t");
 			if (start != std::string::npos && end != std::string::npos) {
@@ -60,13 +55,10 @@ ClientData &parsing_response(ClientData &client){
 		}
 	}
 
-	// Vérification de la taille du corps contre Content-Length
 	if (content_length >= 0 && (long long)client.client_body.size() != content_length) {
 		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
-		// throw std::runtime_error("400 Bad Request: Body size doesn't match Content-Length");
 	}
 
-	// Vérification contre la limite du serveur (utilise Content-Length si disponible, sinon taille réelle)
 	long long size_to_check = (content_length >= 0) ? content_length : (long long)client.client_body.size();
 	if (size_to_check > client.server->getClientMaxBodySize()) {
 		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
@@ -113,7 +105,7 @@ static std::string reason_phrase(int code) {
 	}
 }
 
-// Fonction pour combiner root et path en évitant les doublons
+// combinePaths:  fonction pour combiner root et path en evitant les doublons
 std::string combinePaths(const std::string& root, const std::string& path) {
 	if (root.empty()) return path;
 	if (path.empty()) return root;
@@ -144,14 +136,14 @@ std::string combinePaths(const std::string& root, const std::string& path) {
 	return cleanRoot + cleanPath;
 }
 
-
+// locationinserver : on  parse la location pour trouver si redirection, cgi, etc on return un path
 std::string locationinserver(LocationData *locationserver, ClientData client, std::string full_path){
 		if (!locationserver->redirect.empty()) {
 			std::string val = trim(locationserver->redirect);
 			std::istringstream iss(val);
 			std::string first;
 			iss >> first;
-			int code = 302; // défaut: redirection
+			int code = 302;
 			std::string rest;
 			std::getline(iss, rest);
 			rest = trim(rest);
@@ -168,7 +160,6 @@ std::string locationinserver(LocationData *locationserver, ClientData client, st
 			}
 
 			if (code == 200) {
-				// Réponse 200 avec texte/URL comme corps
 				const std::string body = rest;
 				client.write_buff =
 					"HTTP/1.1 200 OK\r\n"
@@ -180,7 +171,6 @@ std::string locationinserver(LocationData *locationserver, ClientData client, st
 			}
 
 			if (code >= 300 && code < 400) {
-				// Redirection avec en-tête Location
 				const std::string target = rest;
 				client.write_buff =
 					"HTTP/1.1 " + tostring(code) + " " + reason_phrase(code) + "\r\n"
@@ -190,7 +180,6 @@ std::string locationinserver(LocationData *locationserver, ClientData client, st
 				return "";
 			}
 
-			// Code non géré: fallback 302
 			const std::string target = rest.empty() ? first : rest;
 			client.write_buff =
 				"HTTP/1.1 302 Found\r\n"
@@ -199,12 +188,8 @@ std::string locationinserver(LocationData *locationserver, ClientData client, st
 				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
 			return "";
 		}
-
-		//quel method est autorisée 
-		//si autoindex fonctionne
 		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
 
-		// Si aucun index file n'est trouvé, on vérifie si c'est un répertoire et si autoindex est activé
 		if (full_path.empty()) {
 			std::string directory_path = combinePaths(locationserver->root, locationserver->path);
 			struct stat dir_stat;
@@ -221,6 +206,8 @@ std::string locationinserver(LocationData *locationserver, ClientData client, st
 		}
 	return full_path;
 }
+
+
 //dans create body, je doit regarder si le root existe, si le path de la methode existe dans root ou dans une location
 //si c'est dans une location je doit gerer les options
 //ensuite je creer le body et jenvois ca au client
@@ -230,7 +217,6 @@ std::string create_body(ClientData &client){
 	bool has_keepalive = (client.read_buff.find("Connection: keep-alive") != std::string::npos);
 	bool has_close = (client.read_buff.find("Connection: close") != std::string::npos);
 
-	// Règles HTTP/1.1 pour keep-alive (par défaut activé en 1.1)
 	client.keep_alive = is_http_1_1 ? !has_close : has_keepalive;
 
 	if (DEBUG){
@@ -241,53 +227,36 @@ std::string create_body(ClientData &client){
 	std::string full_path;
 	LocationData *locationserver = client.server->getLocation(client.path);
 	
-	if (DEBUG) {
-		std::cout << "DEBUG create_body: path=" << client.path << std::endl;
-		std::cout << "DEBUG create_body: locationserver=" << (locationserver ? "found" : "NULL") << std::endl;
-		if (locationserver) {
-			std::cout << "DEBUG create_body: location path=" << locationserver->path << std::endl;
-		}
-	}
-	
-	// Calculer le chemin complet du fichier
 	if (locationserver != NULL && !locationserver->root.empty()) {
-		// Si on a une location avec un root spécifique
 		full_path = locationserver->root + client.path;
 	} else {
-		// Utiliser le root du serveur
 		full_path = client.server->getRoot() + client.path;
 	}
 	
 	if (client.path == "/")
 		full_path = client.server->findFirstIndexFile();
-
-	// Vérifier d'abord si c'est une requête CGI
 	if (locationserver != NULL && isCGIRequest(client.path, locationserver)) {
 		try {
 			return executeCGI(client, full_path, locationserver);
 		} catch (const std::exception& e) {
-			throw; // Re-lancer l'exception pour qu'elle soit gérée par le niveau supérieur
+			throw;
 		}
 	}
 
-	// si client path est dans une location alors full_path = location + params
+
 	if (locationserver != NULL){
 		full_path = locationinserver(locationserver, client, full_path);
 		return full_path;
 	} else {
-		// Pas de location spécifique, utilisation des paramètres du serveur par défaut
 		if (client.path == "/") {
 			full_path = client.server->findFirstIndexFile();
 		} else {
 			full_path = client.server->getRoot() + client.path;
 		}
-
-		// Si c'est un répertoire et qu'aucun index n'est trouvé
 		struct stat dir_stat;
 		if (stat(full_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
 			std::string index_path = findFirstIndexFile(client.server->getIndex(), full_path + "/");
 			if (index_path.empty()) {
-				// Pas d'autoindex par défaut au niveau serveur - peut être ajouté plus tard
 				throw std::runtime_error("403 Forbidden: Directory listing disabled");
 			}
 			full_path = index_path;
@@ -297,12 +266,12 @@ std::string create_body(ClientData &client){
 	if (!(stat(full_path.c_str(), &sb) == 0))
 		throw std::runtime_error("404 Not Found: Bad path");
 
-	// Vérifier si c'est une requête CGI même sans location spécifique
+
 	if (locationserver && isCGIRequest(client.path, locationserver)) {
 		try {
 			return executeCGI(client, full_path, locationserver);
 		} catch (const std::exception& e) {
-			throw; // Re-lancer l'exception
+			throw;
 		}
 	}
 

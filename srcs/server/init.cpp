@@ -16,7 +16,7 @@
 
 extern volatile sig_atomic_t g_stop_server;
 
-//Creation dun socket en fonction du port
+//Creation d'un socket en fonction du port
 int create_server_socket(const int port){
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_fd == -1){
@@ -47,7 +47,7 @@ int create_server_socket(const int port){
 	return server_fd;
 }
 
-//on va setup epoll aavec tous les fd des servers
+//Setup_epoll : Configuration de l'epoll pour surveiller les événements sur les sockets
 int setup_epoll(std::map<int, Parsing_class> serverMap){
 	int epoll_fd = epoll_create1(0);
 	if (epoll_fd == -1) {
@@ -67,7 +67,7 @@ int setup_epoll(std::map<int, Parsing_class> serverMap){
 	}
 	return epoll_fd;
 }
-
+// run_server : Coeur du server, gestion des connexions clients
 void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 	struct epoll_event events[MAX_EVENTS];
 
@@ -89,7 +89,6 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 				}
 			}
 			if (!is_server_socket){
-				// Find which server this client belongs to
 				for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 					ClientData* client = it->second.getClient(events[i].data.fd);
 					if (client != NULL) {
@@ -100,8 +99,6 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 			}
 		}
 	}
-
-	// Close all clients for all servers when shutting down
 	for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 		it->second.closeAllClients(epoll_fd);
 	}

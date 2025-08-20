@@ -12,13 +12,11 @@
 
 #include "../include/server.hpp"
 
-// Global flag to control the server loop.
 volatile sig_atomic_t g_stop_server = 0;
 
-// Signal handler function
 void signal_handler(int signum)
 {
-	(void)signum; // Unused parameter
+	(void)signum;
 	g_stop_server = 1;
 }
 
@@ -33,7 +31,6 @@ int main(int ac, char **av)
 		return 1;
 	}
 
-	// Register signal handlers for graceful shutdown
 	std::signal(SIGINT, signal_handler);
 	std::signal(SIGTERM, signal_handler);
 
@@ -43,9 +40,7 @@ int main(int ac, char **av)
 	try
 	{
 		serverMap = count_nginx_servers(av[1], serverMap);
-
-		if (serverMap.empty())
-		{
+		if (serverMap.empty()){
 			std::cerr << "No valid server configurations found or parsing failed." << std::endl;
 			return 1;
 		}
@@ -55,27 +50,22 @@ int main(int ac, char **av)
     	}
 
 		epoll_fd = setup_epoll(serverMap);
-
 		if (DEBUG){
 			for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it){
 				it->second.display();
 			}
 		}
-
 		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
 			std::cout << "listen on http://localhost:" << it->second.getPort() << std::endl;
 		}
-
 		run_server(epoll_fd, serverMap);
 	}
 	catch (const std::exception &e)
 	{
 		std::cerr << "Error: " << e.what() << std::endl;
-		// Cleanup on error
 		if (epoll_fd != -1)
 			close(epoll_fd);
 		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
-			// Close all client connections for this server
 			it->second.closeAllClients(epoll_fd);
 			if (it->second.getFd() > 0)
 				close(it->second.getFd());
@@ -83,12 +73,10 @@ int main(int ac, char **av)
 		return 1;
 	}
 
-	// Cleanup after the server loop has finished
 	std::cout << "\nServer shutting down gracefully..." << std::endl;
 	if (epoll_fd != -1)
 		close(epoll_fd);
 	for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
-		// Close all client connections for this server
 		it->second.closeAllClients(epoll_fd);
 		if (it->second.getFd() > 0)
 			close(it->second.getFd());

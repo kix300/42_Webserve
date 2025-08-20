@@ -93,7 +93,6 @@ void handleLocationBlock(const std::string &line, int line_number, bool &in_loca
 		}
 		current_location_path = path;
 
-		// The fix: Create and insert the new location context into the map immediately.
 		LocationData new_location_data;
 		new_location_data.path = path;
 		current_server.setMap(path, new_location_data);

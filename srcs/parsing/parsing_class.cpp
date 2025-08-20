@@ -16,7 +16,6 @@
 Parsing_class::Parsing_class() : _port(0), _root("default"), _name("default"), _server_fd(0), _server_id(0), _client_max_body_size(128 * 1024), _error(false), _index("default"){}
 
 Parsing_class::~Parsing_class(){
-	// Close all client connections when the server is destroyed
 	closeAllClients(-1);
 }
 
@@ -61,7 +60,6 @@ void Parsing_class::clear(){
 	_index = "default";
 	_error_pages.clear();
 	_LocationMap.clear();
-	// Close all clients when clearing the server
 	closeAllClients(-1);
 }
 
@@ -91,8 +89,7 @@ void Parsing_class::setClientMaxBodySize(long long size) {
     _client_max_body_size = size;
 }
 
-LocationData* Parsing_class::getLocation(const std::string& path) {
-	// Chercher la location qui matche le mieux (préfixe le plus long)
+LocationData* Parsing_class::getLocation(const std::string& path) {)
 	LocationData* best_match = NULL;
 	size_t best_match_length = 0;
 	
@@ -100,10 +97,7 @@ LocationData* Parsing_class::getLocation(const std::string& path) {
 		 it != _LocationMap.end(); ++it) {
 		const std::string& location_path = it->first;
 		
-		// Vérifier si le path commence par la location
 		if (path.find(location_path) == 0) {
-			// Vérifier que c'est bien un préfixe valide
-			// (pas juste une partie d'un nom de fichier)
 			if (location_path.length() > best_match_length) {
 				if (path.length() == location_path.length() || 
 					path[location_path.length()] == '/' ||
@@ -113,11 +107,6 @@ LocationData* Parsing_class::getLocation(const std::string& path) {
 				}
 			}
 		}
-	}
-	
-	if (DEBUG && best_match) {
-		std::cout << "DEBUG getLocation: path=" << path 
-				  << " matched location=" << best_match->path << std::endl;
 	}
 	
 	return best_match;
@@ -159,7 +148,6 @@ std::string Parsing_class::findFirstIndexFile(){
 	return "";
 }
 
-// Client management methods implementation
 void Parsing_class::addClient(int client_fd, const ClientData& client) {
     _clients[client_fd] = client;
 }

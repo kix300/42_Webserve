@@ -16,8 +16,6 @@
 #include <map>
 #include <sstream>
 
-// Fonction pour décoder les caractères URL-encoded
-
 void prepare_response(ClientData &client)
 {
 	if (client.methode == "GET")
@@ -32,21 +30,20 @@ void prepare_response(ClientData &client)
 	client.read_buff.clear();
 }
 
-
+// methode_get : on traite les requetes GET en regardant les CGI egalement on regarde si on est dans une location
+// on creer un body
+// on check si le body est un cgi
+// ou on envoi
 void methode_get(ClientData& client){
-	//on regarde si on a la methode allowed dans locationserver
 	check_location_methode(client);
 	
 	try {
 		std::string body = create_body(client);
 		
-		// Si create_body a déjà fabriqué la réponse complète (ex: redirect ou CGI), ne pas écraser
 		if (client.write_buff.size() == 0) {
-			// Vérifier si c'est une sortie CGI (commence par des headers)
 			if (body.find("Content-Type:") != std::string::npos || body.find("Status:") != std::string::npos) {
 				buildHTTPResponse(client, body);
 			} else {
-				// Construction des en-têtes par défaut 200 OK
 				client.write_buff =
 					"HTTP/1.1 200 OK\r\n"
 					"Content-Type: text/html\r\n"
@@ -59,22 +56,19 @@ void methode_get(ClientData& client){
 			}
 		}
 	} catch (const std::exception& e) {
-		// Gestion des erreurs CGI
 		sendErrorResponse(client, e.what());
 	}
 }
 
+// methode_post : on traite les requetes POST en checkant les CGI, upload et formulaire
 void methode_post(ClientData& client){
-	//on regarde si on a la methode allowed dans locationserver
 	check_location_methode(client);
 	
-	// Vérifier d'abord si c'est une requête CGI
 	LocationData *locationserver = client.server->getLocation(client.path);
 	if (locationserver && isCGIRequest(client.path, locationserver)) {
 		try {
 			std::string full_path = client.server->getRoot() + client.path;
 			if (locationserver) {
-				// Ajuster le chemin selon la location
 				if (!locationserver->root.empty()) {
 					full_path = locationserver->root + client.path;
 				}
@@ -89,13 +83,10 @@ void methode_post(ClientData& client){
 		}
 	}
 	
-	//create_body back
 	if (client.write_buff.size() == 0)
 	{
-		// Vérifier si c'est un upload de fichier (multipart/form-data)
 		if (isMultipartFormData(client.read_buff)) {
 				if (handleFileUpload(client)) {
-					// Succès de l'upload - extraire le nom du fichier des headers
 					std::string body_content = client.client_body;
 					size_t headers_end = body_content.find("\r\n\r\n");
 					std::string filename = "unknown";
@@ -126,7 +117,6 @@ void methode_post(ClientData& client){
 						body;
 				}
 		} else {
-			// Traitement normal des formulaires (données URL-encoded)
 			std::map<std::string, std::string> formData = parseFormData(client.client_body);
 
 			std::string popupContent = "Donnees recues:\\n";
@@ -153,32 +143,28 @@ void methode_post(ClientData& client){
 	}
 }
 
+// methode_delete : on cherche si le fichier a delete existe et est au bon endroit ( /delete/)
+// puis on essaye de le delete et on creer un body pour dire que le ficher a bien etet suppr
 void methode_delete(ClientData& client){
-	//on regarde si on a la methode allowed dans locationserver
 	check_location_methode(client);
 
 	if (client.write_buff.size() == 0)
 	{
-		// Vérifier que le chemin commence par "/delete/" pour autoriser uniquement les suppressions dans ce dossier
+
 		if (client.path.find("/delete/") != 0) {
 			throw std::runtime_error("403 Forbidden: Deletion not allowed outside /delete/ directory");
 		}
-		// Construire le chemin complet du fichier à supprimer
 		std::string full_path = client.server->getRoot() + client.path;
-		// Vérifier que le fichier existe
 		struct stat file_stat;
 		if (stat(full_path.c_str(), &file_stat) != 0) {
 			throw std::runtime_error("404 Not Found: File does not exist");
 		}
-		// Ne pas autoriser la suppression de dossiers, uniquement les fichiers
 		if (S_ISDIR(file_stat.st_mode)) {
 			throw std::runtime_error("403 Forbidden: Cannot delete directories");
 		}
-		// Tenter de supprimer le fichier
 		if (remove(full_path.c_str()) != 0) {
 			throw std::runtime_error("500 Internal Server Error: Could not delete file");
 		}
-		// Créer la réponse de succès
 		std::string body = "<html><body>"
 			"<h1>File Deleted Successfully</h1>"
 			"<p>The file '" + client.path + "' has been deleted.</p>"
@@ -198,7 +184,7 @@ void methode_delete(ClientData& client){
 	}
 }
 
-
+// check_location_methode : on verifie si la location est autoriser dans la location
 void check_location_methode(ClientData& client){
 	LocationData *locationserver = client.server->getLocation(client.path);
 	if (locationserver != NULL){

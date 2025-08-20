@@ -15,7 +15,7 @@
 
 #define MAX_EVENTS 1024
 #define BUFFER_SIZE 4096
-#define DEBUG true 
+#define DEBUG false 
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -150,7 +150,7 @@ void handleIndexNameDirective(const std::string &line, int line_number, Parsing_
 //parsing_utils.cpp
 std::string trim(const std::string &str);
 bool isValidPort(const std::string &portStr);
-bool directoryExists(const std::string &path);
+
 
 //parsing_response.cpp
 ClientData &parsing_response(ClientData &client);
