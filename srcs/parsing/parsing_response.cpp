@@ -240,12 +240,38 @@ std::string create_body(ClientData &client){
 		throw std::runtime_error("500 Internal Server Error: Bad root");
 	std::string full_path;
 	LocationData *locationserver = client.server->getLocation(client.path);
-	full_path = client.server->getRoot() + client.path;
+	
+	if (DEBUG) {
+		std::cout << "DEBUG create_body: path=" << client.path << std::endl;
+		std::cout << "DEBUG create_body: locationserver=" << (locationserver ? "found" : "NULL") << std::endl;
+		if (locationserver) {
+			std::cout << "DEBUG create_body: location path=" << locationserver->path << std::endl;
+		}
+	}
+	
+	// Calculer le chemin complet du fichier
+	if (locationserver != NULL && !locationserver->root.empty()) {
+		// Si on a une location avec un root spécifique
+		full_path = locationserver->root + client.path;
+	} else {
+		// Utiliser le root du serveur
+		full_path = client.server->getRoot() + client.path;
+	}
+	
 	if (client.path == "/")
 		full_path = client.server->findFirstIndexFile();
 
-		// si client path est dans une location alors full_path = location + params
-	else if (locationserver != NULL){
+	// Vérifier d'abord si c'est une requête CGI
+	if (locationserver != NULL && isCGIRequest(client.path, locationserver)) {
+		try {
+			return executeCGI(client, full_path, locationserver);
+		} catch (const std::exception& e) {
+			throw; // Re-lancer l'exception pour qu'elle soit gérée par le niveau supérieur
+		}
+	}
+
+	// si client path est dans une location alors full_path = location + params
+	if (locationserver != NULL){
 		full_path = locationinserver(locationserver, client, full_path);
 		return full_path;
 	} else {
@@ -270,6 +296,15 @@ std::string create_body(ClientData &client){
 
 	if (!(stat(full_path.c_str(), &sb) == 0))
 		throw std::runtime_error("404 Not Found: Bad path");
+
+	// Vérifier si c'est une requête CGI même sans location spécifique
+	if (locationserver && isCGIRequest(client.path, locationserver)) {
+		try {
+			return executeCGI(client, full_path, locationserver);
+		} catch (const std::exception& e) {
+			throw; // Re-lancer l'exception
+		}
+	}
 
 	std::string body = read_file(full_path);
 	return body;

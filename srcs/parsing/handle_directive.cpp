@@ -55,6 +55,15 @@ void handleLocationDirective(const std::string &line, int line_number, Parsing_c
 		}
 	} else if (directive == "fastcgi_pass") {
 		loc->fastcgi_pass = value;
+	} else if (directive == "cgi_extension") {
+		// Format: cgi_extension .py /usr/bin/python3
+		std::istringstream iss_cgi(value);
+		std::string extension, interpreter;
+		if (iss_cgi >> extension >> interpreter) {
+			loc->cgi_extensions[extension] = interpreter;
+		}
+	} else if (directive == "cgi_timeout") {
+		loc->cgi_timeout = value;
 	} else if (directive == "expires") {
 		loc->expires = value;
 	} else if (directive == "add_header") {

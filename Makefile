@@ -8,7 +8,7 @@ INCLUDE_DIR = include/
 
 SRC = main.cpp \
 	  server/handle_connection.cpp server/init.cpp server/utils.cpp server/handle_inout.cpp \
-	  response/response.cpp response/upload.cpp \
+	  response/response.cpp response/upload.cpp response/cgi.cpp \
 	  parsing/parse_server.cpp parsing/parsing_class.cpp parsing/handle_directive.cpp parsing/handle_file.cpp parsing/parsing_utils.cpp parsing/parsing_response.cpp
 
 OBJS = $(SRC:%.cpp=$(OBJ_DIR)%.o)
@@ -34,6 +34,10 @@ clean:
 fclean: clean
 	@rm -f $(NAME)
 	@echo "Executable removed"
+
+# make test
+# lance le script python apres avoir run le server
+
 
 re: fclean all
 

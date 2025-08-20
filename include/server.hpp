@@ -15,7 +15,7 @@
 
 #define MAX_EVENTS 1024
 #define BUFFER_SIZE 4096
-#define DEBUG false 
+#define DEBUG true 
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -65,6 +65,9 @@ struct LocationData {
 	bool autoindex;
 	std::string expires;
 	std::map<std::string, std::string> add_header;
+	// CGI support
+	std::map<std::string, std::string> cgi_extensions;  // extension -> interpreter path
+	std::string cgi_timeout;
 
 	LocationData() : autoindex(false) {}
 };
@@ -106,6 +109,14 @@ void methode_get(ClientData& client);
 void methode_post(ClientData& client);
 void methode_delete(ClientData& client);
 void check_location_methode(ClientData& client);
+
+// CGI functions
+bool isCGIRequest(const std::string& path, const LocationData* location);
+std::string executeCGI(ClientData& client, const std::string& script_path, const LocationData* location);
+std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const std::string& script_path);
+std::string getCGIInterpreter(const std::string& file_extension, const LocationData* location);
+bool parseCGIResponse(const std::string& cgi_output, std::string& headers, std::string& body);
+void buildHTTPResponse(ClientData& client, const std::string& cgi_output);
 
 
 //parsing/

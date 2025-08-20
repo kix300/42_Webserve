@@ -36,27 +36,59 @@ void prepare_response(ClientData &client)
 void methode_get(ClientData& client){
 	//on regarde si on a la methode allowed dans locationserver
 	check_location_methode(client);
-	std::string body = create_body(client);
-	// Si create_body a déjà fabriqué la réponse complète (ex: redirect), ne pas écraser
-	if (client.write_buff.size() == 0)
-	{
-		// Construction des en-têtes par défaut 200 OK
-		client.write_buff =
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/html\r\n"
-			"Content-Length: " +
-			tostring(body.size()) + "\r\n"
-			"Connection: " +
-			(client.keep_alive ? "keep-alive" : "close") + "\r\n"
-			"\r\n" +
-			body;
+	
+	try {
+		std::string body = create_body(client);
+		
+		// Si create_body a déjà fabriqué la réponse complète (ex: redirect ou CGI), ne pas écraser
+		if (client.write_buff.size() == 0) {
+			// Vérifier si c'est une sortie CGI (commence par des headers)
+			if (body.find("Content-Type:") != std::string::npos || body.find("Status:") != std::string::npos) {
+				buildHTTPResponse(client, body);
+			} else {
+				// Construction des en-têtes par défaut 200 OK
+				client.write_buff =
+					"HTTP/1.1 200 OK\r\n"
+					"Content-Type: text/html\r\n"
+					"Content-Length: " +
+					tostring(body.size()) + "\r\n"
+					"Connection: " +
+					(client.keep_alive ? "keep-alive" : "close") + "\r\n"
+					"\r\n" +
+					body;
+			}
+		}
+	} catch (const std::exception& e) {
+		// Gestion des erreurs CGI
+		sendErrorResponse(client, e.what());
 	}
 }
 
 void methode_post(ClientData& client){
-
 	//on regarde si on a la methode allowed dans locationserver
 	check_location_methode(client);
+	
+	// Vérifier d'abord si c'est une requête CGI
+	LocationData *locationserver = client.server->getLocation(client.path);
+	if (locationserver && isCGIRequest(client.path, locationserver)) {
+		try {
+			std::string full_path = client.server->getRoot() + client.path;
+			if (locationserver) {
+				// Ajuster le chemin selon la location
+				if (!locationserver->root.empty()) {
+					full_path = locationserver->root + client.path;
+				}
+			}
+			
+			std::string cgi_output = executeCGI(client, full_path, locationserver);
+			buildHTTPResponse(client, cgi_output);
+			return;
+		} catch (const std::exception& e) {
+			sendErrorResponse(client, e.what());
+			return;
+		}
+	}
+	
 	//create_body back
 	if (client.write_buff.size() == 0)
 	{

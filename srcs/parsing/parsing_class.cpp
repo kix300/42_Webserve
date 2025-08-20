@@ -40,6 +40,9 @@ void Parsing_class::display(){
 		for (std::vector<std::string>::iterator itt = it->second.allowed_methods.begin(); itt != it->second.allowed_methods.end(); itt++){
 			std::cout << "Location allowed_methods : " << *itt << std::endl;
 		}
+		for (std::map<std::string, std::string>::iterator itt = it->second.cgi_extensions.begin(); itt != it->second.cgi_extensions.end(); itt++){
+			std::cout << "Location cgi_extension : " << itt->first << " -> " << itt->second << std::endl;
+		}
 	}
 	std::cout << std::endl;
 
@@ -89,11 +92,35 @@ void Parsing_class::setClientMaxBodySize(long long size) {
 }
 
 LocationData* Parsing_class::getLocation(const std::string& path) {
-	std::map<std::string, LocationData>::iterator it = _LocationMap.find(path);
-	if (it == _LocationMap.end()) {
-		return NULL;
+	// Chercher la location qui matche le mieux (préfixe le plus long)
+	LocationData* best_match = NULL;
+	size_t best_match_length = 0;
+	
+	for (std::map<std::string, LocationData>::iterator it = _LocationMap.begin(); 
+		 it != _LocationMap.end(); ++it) {
+		const std::string& location_path = it->first;
+		
+		// Vérifier si le path commence par la location
+		if (path.find(location_path) == 0) {
+			// Vérifier que c'est bien un préfixe valide
+			// (pas juste une partie d'un nom de fichier)
+			if (location_path.length() > best_match_length) {
+				if (path.length() == location_path.length() || 
+					path[location_path.length()] == '/' ||
+					location_path[location_path.length() - 1] == '/') {
+					best_match = &(it->second);
+					best_match_length = location_path.length();
+				}
+			}
+		}
 	}
-	return &(it->second);
+	
+	if (DEBUG && best_match) {
+		std::cout << "DEBUG getLocation: path=" << path 
+				  << " matched location=" << best_match->path << std::endl;
+	}
+	
+	return best_match;
 }
 
 std::string Parsing_class::getErrorPage(int error_code){
