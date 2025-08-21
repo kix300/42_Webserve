@@ -26,7 +26,7 @@ bool handle_write(int client_fd, ClientData & client){
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
 			return true;
 		}
-		perror("write");
+		std::cout << "Error write" << std::endl;
 		return false;
 	}
 	else{
@@ -44,7 +44,7 @@ bool handle_read(int client_fd, ClientData & client){
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
 			return true;
 		}
-		perror("read");
+		std::cout << "Error read" << std::endl;
 		return false;
 	}
 	else if (count  == 0){

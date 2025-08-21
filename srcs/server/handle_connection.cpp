@@ -19,7 +19,6 @@ void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server) {
 
 	int client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len);
 	if (client_fd == -1) {
-		perror("accept");
 		return;
 	}
 
@@ -30,7 +29,6 @@ void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server) {
 	event.data.fd = client_fd;
 
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) {
-		perror("epoll_ctl: client_fd");
 		close(client_fd);
 		return;
 	}

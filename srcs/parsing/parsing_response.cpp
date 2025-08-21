@@ -132,7 +132,6 @@ std::string combinePaths(const std::string& root, const std::string& path) {
 			}
 		}
 	}
-
 	return cleanRoot + cleanPath;
 }
 
@@ -177,6 +176,7 @@ std::string locationinserver(LocationData *locationserver, ClientData client, st
 					"Location: " + target + "\r\n"
 					"Content-Length: 0\r\n"
 					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
+				std::cout << client.write_buff << std::endl;
 				return "";
 			}
 
@@ -204,6 +204,7 @@ std::string locationinserver(LocationData *locationserver, ClientData client, st
 				throw std::runtime_error("404 Not Found: No index file found");
 			}
 		}
+		
 	return full_path;
 }
 
@@ -228,7 +229,7 @@ std::string create_body(ClientData &client){
 	LocationData *locationserver = client.server->getLocation(client.path);
 	
 	if (locationserver != NULL && !locationserver->root.empty()) {
-		full_path = locationserver->root + client.path;
+		full_path = locationserver->root + client.path;	
 	} else {
 		full_path = client.server->getRoot() + client.path;
 	}
@@ -245,17 +246,90 @@ std::string create_body(ClientData &client){
 
 
 	if (locationserver != NULL){
-		std::string result = locationinserver(locationserver, client, full_path);
-		if (result.empty()) {
-			// La réponse est déjà dans client.write_buff (redirection)
+		// std::string result = locationinserver(locationserver, client, full_path);
+		if (!locationserver->redirect.empty()) {
+			std::string val = trim(locationserver->redirect);
+			std::istringstream iss(val);
+			std::string first;
+			iss >> first;
+			int code = 302;
+			std::string rest;
+			std::getline(iss, rest);
+			rest = trim(rest);
+
+			bool numeric = true;
+			if (first.empty()) numeric = false;
+			for (size_t i = 0; i < first.size(); ++i) {
+				if (!std::isdigit(static_cast<unsigned char>(first[i]))) { numeric = false; break; }
+			}
+			if (numeric) {
+				code = std::atoi(first.c_str());
+			} else {
+				rest = val;
+			}
+
+			if (code == 200) {
+				const std::string body = rest;
+				client.write_buff =
+					"HTTP/1.1 200 OK\r\n"
+					"Content-Type: text/plain\r\n"
+					"Content-Length: " + tostring(body.size()) + "\r\n"
+					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n" +
+					body;
+				return "";
+			}
+
+			if (code >= 300 && code < 400) {
+				const std::string target = rest;
+				client.write_buff =
+					"HTTP/1.1 " + tostring(code) + " " + reason_phrase(code) + "\r\n"
+					"Location: " + target + "\r\n"
+					"Content-Length: 0\r\n"
+					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
+				std::cout << client.write_buff << std::endl;
+				return "";
+			}
+
+			const std::string target = rest.empty() ? first : rest;
+			client.write_buff =
+				"HTTP/1.1 302 Found\r\n"
+				"Location: " + target + "\r\n"
+				"Content-Length: 0\r\n"
+				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
 			return "";
-		} else if (result.find("<!DOCTYPE html>") != std::string::npos || result.find("<html>") != std::string::npos) {
-			// C'est un body HTML complet (autoindex)
-			return result;
-		} else {
-			// C'est un path vers un fichier
-			full_path = result;
 		}
+		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
+
+		if (full_path.empty()) {
+			std::string directory_path = combinePaths(locationserver->root, locationserver->path);
+			struct stat dir_stat;
+			if (stat(directory_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+				if (locationserver->autoindex) {
+					std::string body = generateDirectoryListing(directory_path, client.path);
+					return body;
+				} else {
+					throw std::runtime_error("403 Forbidden: Directory listing disabled");
+				}
+			} else {
+				throw std::runtime_error("404 Not Found: No index file found");
+			}
+		}
+		// std::cout << "proute :" << full_path << std::endl;
+		// std::cout << "result :" << result << std::endl;
+		// if (result.empty()) {
+		// 	std::cout << "proute :" << full_path << std::endl;
+		// 	std::cout << "result :" << result << std::endl;
+		// 	std::cout << "write buff:" << client.write_buff << std::endl;
+		// 	//ici faire la redirection dur write.buff
+		// 	// La réponse est déjà dans client.write_buff (redirection)
+		// 	return "";
+		// } else if (result.find("<!DOCTYPE html>") != std::string::npos || result.find("<html>") != std::string::npos) {
+		// 	// C'est un body HTML complet (autoindex)
+		// 	return result;
+		// } else {
+		// 	// C'est un path vers un fichier
+		// 	full_path = result;
+		// }
 	} else {
 		if (client.path == "/") {
 			full_path = client.server->findFirstIndexFile();

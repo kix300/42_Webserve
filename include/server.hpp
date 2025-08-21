@@ -15,7 +15,7 @@
 
 #define MAX_EVENTS 1024
 #define BUFFER_SIZE 4096
-#define DEBUG false 
+#define DEBUG false
 #include <iostream>
 #include <fstream>
 #include <sstream>

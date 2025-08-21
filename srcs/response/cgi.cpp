@@ -213,7 +213,7 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
         execve(interpreter.c_str(), args, &env_ptrs[0]);
         
         // Si on arrive ici, execve a échoué
-        perror("execve failed");
+        std::cout << "Error execve" << std::endl;
         exit(1);
     } else {
         // Processus parent
@@ -224,7 +224,7 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
         if (client.methode == "POST" && !client.client_body.empty()) {
             ssize_t written = write(pipe_in[1], client.client_body.c_str(), client.client_body.length());
             if (written == -1) {
-                perror("Failed to write to CGI script");
+                std::cout << "Error write" << std::endl;
             }
         }
         close(pipe_in[1]);
