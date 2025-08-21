@@ -108,6 +108,7 @@ int sendErrorResponse(ClientData& client, const std::string& e_mesg) {
     if (e_mesg.find("403") != std::string::npos) error_code = 403;
     else if (e_mesg.find("404") != std::string::npos) error_code = 404;
     else if (e_mesg.find("405") != std::string::npos) error_code = 405;
+	else if (e_mesg.find("408") != std::string::npos) error_code = 408;
 
     if (error_code != 0) {
         std::string error_page_path = client.server->getErrorPage(error_code);
