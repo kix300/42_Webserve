@@ -28,7 +28,7 @@ ClientData &parsing_response(ClientData &client){
     if (header_end == std::string::npos) {
         throw std::runtime_error("400 Bad Request: Malformed headers");
 	}
-e
+
 	client.client_body = request.substr(header_end + 4);
 	std::string headers = request.substr(0, header_end);
 
@@ -245,8 +245,17 @@ std::string create_body(ClientData &client){
 
 
 	if (locationserver != NULL){
-		full_path = locationinserver(locationserver, client, full_path);
-		return full_path;
+		std::string result = locationinserver(locationserver, client, full_path);
+		if (result.empty()) {
+			// La réponse est déjà dans client.write_buff (redirection)
+			return "";
+		} else if (result.find("<!DOCTYPE html>") != std::string::npos || result.find("<html>") != std::string::npos) {
+			// C'est un body HTML complet (autoindex)
+			return result;
+		} else {
+			// C'est un path vers un fichier
+			full_path = result;
+		}
 	} else {
 		if (client.path == "/") {
 			full_path = client.server->findFirstIndexFile();
@@ -257,6 +266,7 @@ std::string create_body(ClientData &client){
 		if (stat(full_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
 			std::string index_path = findFirstIndexFile(client.server->getIndex(), full_path + "/");
 			if (index_path.empty()) {
+				// Pas d'autoindex au niveau serveur, donc on lève une exception
 				throw std::runtime_error("403 Forbidden: Directory listing disabled");
 			}
 			full_path = index_path;
@@ -275,7 +285,7 @@ std::string create_body(ClientData &client){
 		}
 	}
 
-	std::string body = read_file(full_path);
+	std::string body = read_file_or_directory(full_path, client.path, false);
 	return body;
 }
 

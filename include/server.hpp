@@ -93,7 +93,6 @@ bool handle_read(int client_fd, ClientData &client);
 void close_client(int epoll_fd, int client_fd, Parsing_class& server);
 std::map<std::string, std::string> parseFormData(const std::string& body);
 std::string urlDecode(const std::string& str);
-std::string read_file(const std::string& path);
 std::string generateDirectoryListing(const std::string& directory_path, const std::string& request_path);
 std::string read_file_or_directory(const std::string& path, const std::string& request_path, bool autoindex_enabled);
 

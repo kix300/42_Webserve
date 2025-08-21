@@ -112,7 +112,7 @@ int sendErrorResponse(ClientData& client, const std::string& e_mesg) {
     if (error_code != 0) {
         std::string error_page_path = client.server->getErrorPage(error_code);
         if (!error_page_path.empty() && errorPageExists(error_page_path)) {
-            std::string file_content = read_file(error_page_path);
+            std::string file_content = read_file_or_directory(error_page_path, "", false);
             client.write_buff =
                 "HTTP/1.1 " + e_mesg + "\r\n"
                 "Content-Type: text/html\r\n"

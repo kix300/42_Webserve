@@ -20,32 +20,6 @@ void close_client(int epoll_fd, int client_fd, Parsing_class& server){
 	server.removeClient(client_fd);
 }
 
-std::string read_file(const std::string &path) {
-	struct stat file_stat;
-	if (stat(path.c_str(), &file_stat) != 0) {
-		throw std::runtime_error("404 Not Found: File does not exist");
-	}
-
-	if (S_ISDIR(file_stat.st_mode)) {
-		throw std::runtime_error("404 Not Found: Path is a directory");
-	}
-
-	std::ifstream file(path.c_str(), std::ios::binary);
-	if (!file.is_open()) {
-		throw std::runtime_error("404 Not Found: Could not open file");
-	}
-
-	std::string content;
-	file.seekg(0, std::ios::end);
-	content.reserve(file.tellg());
-	file.seekg(0, std::ios::beg);
-
-	content.assign((std::istreambuf_iterator<char>(file)),
-				std::istreambuf_iterator<char>());
-
-	return content;
-}
-
 std::string urlDecode(const std::string& str) {
 	std::string decoded;
 	for (size_t i = 0; i < str.length(); ++i) {

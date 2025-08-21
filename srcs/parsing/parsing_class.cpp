@@ -89,7 +89,7 @@ void Parsing_class::setClientMaxBodySize(long long size) {
     _client_max_body_size = size;
 }
 
-LocationData* Parsing_class::getLocation(const std::string& path) {)
+LocationData* Parsing_class::getLocation(const std::string& path) {
 	LocationData* best_match = NULL;
 	size_t best_match_length = 0;
 	
