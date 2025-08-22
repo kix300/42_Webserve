@@ -12,8 +12,9 @@ print("<html><head><title>CGI Lent</title></head><body>")
 print("<h1>Script CGI qui prend du temps</h1>")
 
 # Simuler un traitement long
+i = 0
 while 1:
-    print("<p><strong>aaaa!</strong></p>")
+    i= i + 1
 
 print("<p><strong>Traitement terminé!</strong></p>")
 print("</body></html>")
