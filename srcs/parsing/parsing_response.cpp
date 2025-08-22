@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 10:40:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 15:46:42 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/22 14:30:32 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -237,11 +237,7 @@ std::string create_body(ClientData &client){
 	if (client.path == "/")
 		full_path = client.server->findFirstIndexFile();
 	if (locationserver != NULL && isCGIRequest(client.path, locationserver)) {
-		try {
-			return executeCGI(client, full_path, locationserver);
-		} catch (const std::exception& e) {
-			throw;
-		}
+		return executeCGI(client, full_path, locationserver);
 	}
 
 
@@ -314,22 +310,6 @@ std::string create_body(ClientData &client){
 				throw std::runtime_error("404 Not Found: No index file found");
 			}
 		}
-		// std::cout << "proute :" << full_path << std::endl;
-		// std::cout << "result :" << result << std::endl;
-		// if (result.empty()) {
-		// 	std::cout << "proute :" << full_path << std::endl;
-		// 	std::cout << "result :" << result << std::endl;
-		// 	std::cout << "write buff:" << client.write_buff << std::endl;
-		// 	//ici faire la redirection dur write.buff
-		// 	// La réponse est déjà dans client.write_buff (redirection)
-		// 	return "";
-		// } else if (result.find("<!DOCTYPE html>") != std::string::npos || result.find("<html>") != std::string::npos) {
-		// 	// C'est un body HTML complet (autoindex)
-		// 	return result;
-		// } else {
-		// 	// C'est un path vers un fichier
-		// 	full_path = result;
-		// }
 	} else {
 		if (client.path == "/") {
 			full_path = client.server->findFirstIndexFile();
@@ -352,11 +332,7 @@ std::string create_body(ClientData &client){
 
 
 	if (locationserver && isCGIRequest(client.path, locationserver)) {
-		try {
-			return executeCGI(client, full_path, locationserver);
-		} catch (const std::exception& e) {
-			throw;
-		}
+		return executeCGI(client, full_path, locationserver);
 	}
 
 	std::string body = read_file_or_directory(full_path, client.path, false);

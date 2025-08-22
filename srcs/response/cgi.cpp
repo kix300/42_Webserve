@@ -6,13 +6,14 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/20 10:00:00 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/20 10:00:00 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/22 14:23:27 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/server.hpp"
 #include <sys/wait.h>
 #include <cstring>
+#include <unistd.h>
 
 bool isCGIRequest(const std::string& path, const LocationData* location) {
     if (!location || location->cgi_extensions.empty()) {
@@ -156,6 +157,10 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 	if (interpreter.empty()) {
 		throw std::runtime_error("500 Internal Server Error: No interpreter found for extension");
 	}
+	
+	// check si cle interpreter existe
+	if (stat(interpreter.c_str(), &file_stat) != 0)
+		throw std::runtime_error("500 Internal Server Error: No interpreter found for extension");
 
 	// Créer les pipes pour la communication
 	int pipe_in[2], pipe_out[2];
@@ -184,6 +189,7 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 
 		close(pipe_in[0]);
 		close(pipe_out[1]);
+
 
 		// Préparer l'environnement
 		std::map<std::string, std::string> cgi_env = buildCGIEnvironment(client, script_path);

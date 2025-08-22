@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 11:34:40 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 15:49:46 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/08/22 14:34:21 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,14 +36,66 @@ void prepare_response(ClientData &client)
 // ou on envoi
 void methode_get(ClientData& client){
 	check_location_methode(client);
-	
-	try {
-		std::string body = create_body(client);
-		
-		if (client.write_buff.size() == 0) {
-			if (body.find("Content-Type:") != std::string::npos || body.find("Status:") != std::string::npos) {
-				buildHTTPResponse(client, body);
-			} else {
+	std::string body = create_body(client);
+
+	if (client.write_buff.size() == 0) {
+		if (body.find("Content-Type:") != std::string::npos || body.find("Status:") != std::string::npos) {
+			buildHTTPResponse(client, body);
+		} else {
+			client.write_buff =
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Type: text/html\r\n"
+				"Content-Length: " +
+				tostring(body.size()) + "\r\n"
+				"Connection: " +
+				(client.keep_alive ? "keep-alive" : "close") + "\r\n"
+				"\r\n" +
+				body;
+		}
+	}
+}
+
+// methode_post : on traite les requetes POST en checkant les CGI, upload et formulaire
+void methode_post(ClientData& client){
+	check_location_methode(client);
+
+	LocationData *locationserver = client.server->getLocation(client.path);
+	if (locationserver && isCGIRequest(client.path, locationserver)) {
+		std::string full_path = client.server->getRoot() + client.path;
+		if (locationserver) {
+			if (!locationserver->root.empty()) {
+				full_path = locationserver->root + client.path;
+			}
+		}
+
+		std::string cgi_output = executeCGI(client, full_path, locationserver);
+		buildHTTPResponse(client, cgi_output);
+		return;
+	}
+
+	if (client.write_buff.size() == 0)
+	{
+		if (isMultipartFormData(client.read_buff)) {
+			if (handleFileUpload(client)) {
+				std::string body_content = client.client_body;
+				size_t headers_end = body_content.find("\r\n\r\n");
+				std::string filename = "unknown";
+				if (headers_end != std::string::npos) {
+					std::string headers = body_content.substr(0, headers_end);
+					filename = extractFileName(headers);
+					if (filename.empty()) filename = "unknown";
+				}
+
+				std::string body = "<html><body>"
+					"<h1>Upload Réussi!</h1>"
+					"<p>Le fichier a été uploadé avec succès.</p>"
+					"<p>Nom du fichier: " + filename + "</p>"
+					"<p>Taille: " + tostring(client.client_body.size()) + " bytes</p>"
+					"<script>alert('Fichier uploadé avec succès: " + filename + "');</script>"
+					"<a href='/upload/'>Voir les fichiers uploadés</a><br>"
+					"<a href='/methode/'>Retour à l'interface</a>"
+					"</body></html>";
+
 				client.write_buff =
 					"HTTP/1.1 200 OK\r\n"
 					"Content-Type: text/html\r\n"
@@ -54,68 +106,6 @@ void methode_get(ClientData& client){
 					"\r\n" +
 					body;
 			}
-		}
-	} catch (const std::exception& e) {
-		sendErrorResponse(client, e.what());
-	}
-}
-
-// methode_post : on traite les requetes POST en checkant les CGI, upload et formulaire
-void methode_post(ClientData& client){
-	check_location_methode(client);
-	
-	LocationData *locationserver = client.server->getLocation(client.path);
-	if (locationserver && isCGIRequest(client.path, locationserver)) {
-		try {
-			std::string full_path = client.server->getRoot() + client.path;
-			if (locationserver) {
-				if (!locationserver->root.empty()) {
-					full_path = locationserver->root + client.path;
-				}
-			}
-			
-			std::string cgi_output = executeCGI(client, full_path, locationserver);
-			buildHTTPResponse(client, cgi_output);
-			return;
-		} catch (const std::exception& e) {
-			sendErrorResponse(client, e.what());
-			return;
-		}
-	}
-	
-	if (client.write_buff.size() == 0)
-	{
-		if (isMultipartFormData(client.read_buff)) {
-				if (handleFileUpload(client)) {
-					std::string body_content = client.client_body;
-					size_t headers_end = body_content.find("\r\n\r\n");
-					std::string filename = "unknown";
-					if (headers_end != std::string::npos) {
-						std::string headers = body_content.substr(0, headers_end);
-						filename = extractFileName(headers);
-						if (filename.empty()) filename = "unknown";
-					}
-					
-					std::string body = "<html><body>"
-						"<h1>Upload Réussi!</h1>"
-						"<p>Le fichier a été uploadé avec succès.</p>"
-						"<p>Nom du fichier: " + filename + "</p>"
-						"<p>Taille: " + tostring(client.client_body.size()) + " bytes</p>"
-						"<script>alert('Fichier uploadé avec succès: " + filename + "');</script>"
-						"<a href='/upload/'>Voir les fichiers uploadés</a><br>"
-						"<a href='/methode/'>Retour à l'interface</a>"
-						"</body></html>";
-
-					client.write_buff =
-						"HTTP/1.1 200 OK\r\n"
-						"Content-Type: text/html\r\n"
-						"Content-Length: " +
-						tostring(body.size()) + "\r\n"
-						"Connection: " +
-						(client.keep_alive ? "keep-alive" : "close") + "\r\n"
-						"\r\n" +
-						body;
-				}
 		} else {
 			std::map<std::string, std::string> formData = parseFormData(client.client_body);
 
