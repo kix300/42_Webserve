@@ -72,13 +72,18 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 	struct epoll_event events[MAX_EVENTS];
 
 	while (!g_stop_server) {
-		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1); //gerer timeout
+		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, 1000); //gerer timeout
 		if (nfds == -1) {
 			if (errno == EINTR) {
 				continue;
 			}
 			throw std::runtime_error("epoll_wait() failed: " + std::string(strerror(errno)));
 		}
+
+		for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {
+			check_clients_timeout(epoll_fd, it->second);
+		}
+
 		for (int i = 0; i < nfds; ++i) {
 			bool is_server_socket = false;
 			for (std::map<int, Parsing_class>::iterator it = serverMap.begin(); it != serverMap.end(); ++it) {

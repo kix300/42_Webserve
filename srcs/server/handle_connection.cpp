@@ -33,13 +33,15 @@ void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server) {
 		return;
 	}
 
-	ClientData new_client = {client_fd, std::string(), std::string(), false, std::string(), std::string(), std::string(), &server};
+	ClientData new_client = {client_fd, std::string(), std::string(), false, std::string(), std::string(), std::string(), &server, time(NULL)};
 	server.addClient(client_fd, new_client);
 }
 
 // handle_client_event : Gestion des événements pour un client, si in alors on parse et prepare une responce
 // sinon on gere le write
 void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& client, Parsing_class& server) {
+
+	client.last_activity = time(NULL);
 
 	int client_fd = event.data.fd;
 	if (event.events & EPOLLIN){

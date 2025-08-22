@@ -36,6 +36,7 @@
 #include <set>
 #include <stdexcept>
 #include <sys/stat.h>
+#include <ctime>
 
 #include "class/parsing_class.hpp"
 
@@ -51,6 +52,7 @@ struct ClientData {
 	std::string path;
 	std::string client_body;
 	Parsing_class *server;
+	time_t last_activity;
 };
 
 struct LocationData {
@@ -88,6 +90,10 @@ int sendErrorResponse(ClientData& client, const std::string& e_mesg);
 //handle_inout.cpp
 bool handle_write(int client_fd, ClientData &client);
 bool handle_read(int client_fd, ClientData &client);
+
+//timeout.cpp
+void check_clients_timeout(int epoll_fd, Parsing_class &server);
+
 
 //utils.cpp
 void close_client(int epoll_fd, int client_fd, Parsing_class& server);
