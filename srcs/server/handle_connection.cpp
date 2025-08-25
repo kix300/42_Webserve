@@ -22,8 +22,6 @@ void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server) {
 		return;
 	}
 	
-	std::cout << "=== NOUVELLE CONNEXION CLIENT " << client_fd << " ===" << std::endl;
-
 	fcntl(client_fd, F_SETFL, O_NONBLOCK); // met le fd a non bloquant
 
 	struct epoll_event event;

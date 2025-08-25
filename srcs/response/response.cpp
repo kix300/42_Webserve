@@ -87,13 +87,13 @@ void methode_post(ClientData& client){
 				}
 
 				std::string body = "<html><body>"
-					"<h1>Upload Réussi!</h1>"
-					"<p>Le fichier a été uploadé avec succès.</p>"
-					"<p>Nom du fichier: " + filename + "</p>"
-					"<p>Taille: " + tostring(client.client_body.size()) + " bytes</p>"
-					"<script>alert('Fichier uploadé avec succès: " + filename + "');</script>"
-					"<a href='/upload/'>Voir les fichiers uploadés</a><br>"
-					"<a href='/methode/'>Retour à l'interface</a>"
+					"<h1>Upload Done!</h1>"
+					"<p>File was upload.</p>"
+					"<p>name : " + filename + "</p>"
+					"<p>Size : " + tostring(client.client_body.size()) + " bytes</p>"
+					"<script>alert('File upload succes: " + filename + "');</script>"
+					"<a href='/upload/'>See upload file</a><br>"
+					"<a href='/methode/'>back to methode</a>"
 					"</body></html>";
 
 				client.write_buff =
@@ -109,13 +109,13 @@ void methode_post(ClientData& client){
 		} else {
 			std::map<std::string, std::string> formData = parseFormData(client.client_body);
 
-			std::string popupContent = "Donnees recues:\\n";
+			std::string popupContent = "Data:\\n";
 			for (std::map<std::string, std::string>::iterator it = formData.begin(); it != formData.end(); ++it) {
 				popupContent += it->first + ": " + it->second + "\\n";
 			}
 
 			std::string body = "<html><body>"
-				"<h1>Page avec popup</h1>"
+				"<h1>Popup</h1>"
 				"<script>alert('" + popupContent + "');</script>"
 				"</body></html>";
 
