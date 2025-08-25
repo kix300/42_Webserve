@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 #include <cstring>
 #include <unistd.h>
+#include <time.h>
 
 bool isCGIRequest(const std::string& path, const LocationData* location) {
     if (!location || location->cgi_extensions.empty()) {
@@ -244,46 +245,37 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 		if (location && !location->cgi_timeout.empty()) {
 			timeout_seconds = std::atoi(location->cgi_timeout.c_str());
 			if (timeout_seconds <= 0) {
-				timeout_seconds = 3; // a default value
+				timeout_seconds = 3;
 			}
 		}
 
+		bool timed_out = false;
 		while (true) {
+			int retval = waitpid(pid, &status, WNOHANG);
+			if (retval != 0) {
+				break;
+			}
 			if (difftime(time(NULL), start_time) > timeout_seconds) {
-				kill(pid, SIGKILL);
-				waitpid(pid, &status, 0); // Clean up the zombie process
-				close(pipe_out[0]);
-				throw std::runtime_error("504 Gateway Timeout: CGI script timed out");
+				timed_out = true;
+				break;
 			}
+		}
+		
+		// Gérer le timeout
+		if (timed_out) {
+			kill(pid, SIGKILL);
+			waitpid(pid, &status, 0);
+			close(pipe_out[0]);
+			throw std::runtime_error("504 Gateway Timeout: CGI script exited with error");
+		}
 
-			fd_set read_fds;
-			FD_ZERO(&read_fds);
-			FD_SET(pipe_out[0], &read_fds);
-
-			struct timeval tv;
-			tv.tv_sec = 1; // Wait up to 1 second.
-			tv.tv_usec = 0;
-
-			int retval = select(pipe_out[0] + 1, &read_fds, NULL, NULL, &tv);
-
-			if (retval == -1) {
-				kill(pid, SIGKILL);
-				waitpid(pid, &status, 0);
-				close(pipe_out[0]);
-				throw std::runtime_error("500 Internal Server Error: select() failed");
-			} else if (retval > 0) {
-				ssize_t bytes_read = read(pipe_out[0], buffer, sizeof(buffer) - 1);
-				if (bytes_read > 0) {
-					buffer[bytes_read] = '\0';
-					output += buffer;
-				} else {
-					break;
-				}
-			}
+		ssize_t bytes_read;
+		while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer) - 1)) > 0) {
+			buffer[bytes_read] = '\0';
+			output += buffer;
 		}
 
 		close(pipe_out[0]);
-		waitpid(pid, &status, 0);
 
 		if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
 			throw std::runtime_error("500 Internal Server Error: CGI script exited with error");

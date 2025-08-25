@@ -72,7 +72,6 @@ ClientData &parsing_response(ClientData &client){
 	std::stringstream ss(request_line);
 	ss >> method >> path >> http;
 
-	std::cout << request << std::endl;
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
 		if (client.keep_alive)
@@ -176,7 +175,8 @@ std::string locationinserver(LocationData *locationserver, ClientData client, st
 					"Location: " + target + "\r\n"
 					"Content-Length: 0\r\n"
 					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
-				std::cout << client.write_buff << std::endl;
+				if(DEBUG)
+					std::cout << client.write_buff << std::endl;
 				return "";
 			}
 
@@ -329,11 +329,6 @@ std::string create_body(ClientData &client){
 
 	if (!(stat(full_path.c_str(), &sb) == 0))
 		throw std::runtime_error("404 Not Found: Bad path");
-
-
-	if (locationserver && isCGIRequest(client.path, locationserver)) {
-		return executeCGI(client, full_path, locationserver);
-	}
 
 	std::string body = read_file_or_directory(full_path, client.path, false);
 	return body;

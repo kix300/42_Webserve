@@ -21,6 +21,8 @@ void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server) {
 	if (client_fd == -1) {
 		return;
 	}
+	
+	std::cout << "=== NOUVELLE CONNEXION CLIENT " << client_fd << " ===" << std::endl;
 
 	fcntl(client_fd, F_SETFL, O_NONBLOCK); // met le fd a non bloquant
 
@@ -33,7 +35,7 @@ void handle_new_connection(int epoll_fd, int server_fd, Parsing_class &server) {
 		return;
 	}
 
-	ClientData new_client = {client_fd, std::string(), std::string(), false, std::string(), std::string(), std::string(), &server, time(NULL)};
+	ClientData new_client = {client_fd, std::string(), std::string(), false, std::string(), std::string(), std::string(), &server, time(NULL), epoll_fd};
 	server.addClient(client_fd, new_client);
 }
 
@@ -69,11 +71,21 @@ void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& cli
 				client.write_buff = "HTTP/1.1 " + e_mesg + " \r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
 				client.keep_alive = false;
 			}
+			client.read_buff.clear();
+			
+			if (e_mesg.find("504") != std::string::npos) {
+				client.keep_alive = false;
+				handle_write(client_fd, client);
+				close_client(epoll_fd, client_fd, server);
+				return;
+			}
 
+			//Plus de EPOLLIN Donc a voir les form
 			struct epoll_event ev;
-			ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+			ev.events = EPOLLOUT | EPOLLET;
 			ev.data.fd = client_fd;
 			epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &ev);
+			return;
 		}
 	}
 	if (event.events & EPOLLOUT){
@@ -121,6 +133,7 @@ int sendErrorResponse(ClientData& client, const std::string& e_mesg) {
                 "Connection: close\r\n"
                 "\r\n" +
                 file_content;
+            client.keep_alive = false; // Force la fermeture de la connexion
             return 0;
         }
     }

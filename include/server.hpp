@@ -53,6 +53,7 @@ struct ClientData {
 	std::string client_body;
 	Parsing_class *server;
 	time_t last_activity;
+	int epoll_fd;
 };
 
 struct LocationData {
