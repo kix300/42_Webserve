@@ -76,6 +76,7 @@ std::string extractFileName(const std::string& contentDisposition) {
 // Fonction principale pour gérer l'upload de fichier
 bool handleFileUpload(ClientData& client) {
 	std::string request = client.read_buff;
+	std::cout << request << std::endl;
 	
 	// Vérifier si c'est du multipart/form-data
 	if (!isMultipartFormData(request)) {
@@ -105,6 +106,7 @@ bool handleFileUpload(ClientData& client) {
 	
 	// Trouver la fin de cette partie (prochaine boundary)
 	size_t end_pos = body.find(full_boundary, start_pos);
+	//quand c'est une image on n'as pas le dernier boundary
 	if (end_pos == std::string::npos) {
 		throw std::runtime_error("400 Bad Request: Incomplete multipart data");
 	}

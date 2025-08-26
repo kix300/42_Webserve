@@ -55,13 +55,22 @@ ClientData &parsing_response(ClientData &client){
 		}
 	}
 
-	if (content_length >= 0 && (long long)client.client_body.size() != content_length) {
+	if (content_length >= 0 && (long long)client.client_body.size() > content_length) {
+		std::cout << "hello"<< std::endl;
+		std::cout << content_length << std::endl;
+		std::cout << (long long)client.client_body.size() << std::endl;
 		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
 	}
 
 	long long size_to_check = (content_length >= 0) ? content_length : (long long)client.client_body.size();
+	// dans le cas ou c'est une image alors on sen fou Iguess
 	if (size_to_check > client.server->getClientMaxBodySize()) {
-		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
+		std::cout << size_to_check << std::endl;
+		std::cout << client.server->getClientMaxBodySize() << std::endl;
+		if (!(client.read_buff.find(".png") != std::string::npos)){
+			throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
+		}
+		std::cout << "je suis normalement une image donc et la taille du body est differente du content lenght" << std::endl;
 	}
 	size_t first_line_end = request.find("\r\n");
 	if (first_line_end == std::string::npos) {
@@ -136,75 +145,75 @@ std::string combinePaths(const std::string& root, const std::string& path) {
 
 // locationinserver : on  parse la location pour trouver si redirection, cgi, etc on return un path
 std::string locationinserver(LocationData *locationserver, ClientData client, std::string full_path){
-		if (!locationserver->redirect.empty()) {
-			std::string val = trim(locationserver->redirect);
-			std::istringstream iss(val);
-			std::string first;
-			iss >> first;
-			int code = 302;
-			std::string rest;
-			std::getline(iss, rest);
-			rest = trim(rest);
+	if (!locationserver->redirect.empty()) {
+		std::string val = trim(locationserver->redirect);
+		std::istringstream iss(val);
+		std::string first;
+		iss >> first;
+		int code = 302;
+		std::string rest;
+		std::getline(iss, rest);
+		rest = trim(rest);
 
-			bool numeric = true;
-			if (first.empty()) numeric = false;
-			for (size_t i = 0; i < first.size(); ++i) {
-				if (!std::isdigit(static_cast<unsigned char>(first[i]))) { numeric = false; break; }
-			}
-			if (numeric) {
-				code = std::atoi(first.c_str());
-			} else {
-				rest = val;
-			}
+		bool numeric = true;
+		if (first.empty()) numeric = false;
+		for (size_t i = 0; i < first.size(); ++i) {
+			if (!std::isdigit(static_cast<unsigned char>(first[i]))) { numeric = false; break; }
+		}
+		if (numeric) {
+			code = std::atoi(first.c_str());
+		} else {
+			rest = val;
+		}
 
-			if (code == 200) {
-				const std::string body = rest;
-				client.write_buff =
-					"HTTP/1.1 200 OK\r\n"
-					"Content-Type: text/plain\r\n"
-					"Content-Length: " + tostring(body.size()) + "\r\n"
-					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n" +
-					body;
-				return "";
-			}
-
-			if (code >= 300 && code < 400) {
-				const std::string target = rest;
-				client.write_buff =
-					"HTTP/1.1 " + tostring(code) + " " + reason_phrase(code) + "\r\n"
-					"Location: " + target + "\r\n"
-					"Content-Length: 0\r\n"
-					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
-				if(DEBUG)
-					std::cout << client.write_buff << std::endl;
-				return "";
-			}
-
-			const std::string target = rest.empty() ? first : rest;
+		if (code == 200) {
+			const std::string body = rest;
 			client.write_buff =
-				"HTTP/1.1 302 Found\r\n"
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Type: text/plain\r\n"
+				"Content-Length: " + tostring(body.size()) + "\r\n"
+				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n" +
+				body;
+			return "";
+		}
+
+		if (code >= 300 && code < 400) {
+			const std::string target = rest;
+			client.write_buff =
+				"HTTP/1.1 " + tostring(code) + " " + reason_phrase(code) + "\r\n"
 				"Location: " + target + "\r\n"
 				"Content-Length: 0\r\n"
 				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
+			if(DEBUG)
+				std::cout << client.write_buff << std::endl;
 			return "";
 		}
-		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
 
-		if (full_path.empty()) {
-			std::string directory_path = combinePaths(locationserver->root, locationserver->path);
-			struct stat dir_stat;
-			if (stat(directory_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
-				if (locationserver->autoindex) {
-					std::string body = generateDirectoryListing(directory_path, client.path);
-					return body;
-				} else {
-					throw std::runtime_error("403 Forbidden: Directory listing disabled");
-				}
+		const std::string target = rest.empty() ? first : rest;
+		client.write_buff =
+			"HTTP/1.1 302 Found\r\n"
+			"Location: " + target + "\r\n"
+			"Content-Length: 0\r\n"
+			"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
+		return "";
+	}
+	full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
+
+	if (full_path.empty()) {
+		std::string directory_path = combinePaths(locationserver->root, locationserver->path);
+		struct stat dir_stat;
+		if (stat(directory_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+			if (locationserver->autoindex) {
+				std::string body = generateDirectoryListing(directory_path, client.path);
+				return body;
 			} else {
-				throw std::runtime_error("404 Not Found: No index file found");
+				throw std::runtime_error("403 Forbidden: Directory listing disabled");
 			}
+		} else {
+			throw std::runtime_error("404 Not Found: No index file found");
 		}
-		
+	}
+
 	return full_path;
 }
 
@@ -227,13 +236,13 @@ std::string create_body(ClientData &client){
 		throw std::runtime_error("500 Internal Server Error: Bad root");
 	std::string full_path;
 	LocationData *locationserver = client.server->getLocation(client.path);
-	
+
 	if (locationserver != NULL && !locationserver->root.empty()) {
 		full_path = locationserver->root + client.path;	
 	} else {
 		full_path = client.server->getRoot() + client.path;
 	}
-	
+
 	if (client.path == "/")
 		full_path = client.server->findFirstIndexFile();
 	if (locationserver != NULL && isCGIRequest(client.path, locationserver)) {
