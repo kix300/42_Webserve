@@ -55,22 +55,17 @@ ClientData &parsing_response(ClientData &client){
 		}
 	}
 
-	if (content_length >= 0 && (long long)client.client_body.size() > content_length) {
-		std::cout << "hello"<< std::endl;
-		std::cout << content_length << std::endl;
-		std::cout << (long long)client.client_body.size() << std::endl;
+	//ici si image alors classique on check la longeur du contenu 
+	if (content_length >= 0 && (long long)client.client_body.size() != content_length) {
 		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
 	}
 
 	long long size_to_check = (content_length >= 0) ? content_length : (long long)client.client_body.size();
-	// dans le cas ou c'est une image alors on sen fou Iguess
+	// dans le cas ou c'est une image alors on sen fou Iguess. Non.
 	if (size_to_check > client.server->getClientMaxBodySize()) {
-		std::cout << size_to_check << std::endl;
-		std::cout << client.server->getClientMaxBodySize() << std::endl;
 		if (!(client.read_buff.find(".png") != std::string::npos)){
 			throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
 		}
-		std::cout << "je suis normalement une image donc et la taille du body est differente du content lenght" << std::endl;
 	}
 	size_t first_line_end = request.find("\r\n");
 	if (first_line_end == std::string::npos) {
@@ -291,7 +286,6 @@ std::string create_body(ClientData &client){
 					"Location: " + target + "\r\n"
 					"Content-Length: 0\r\n"
 					"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
-				std::cout << client.write_buff << std::endl;
 				return "";
 			}
 

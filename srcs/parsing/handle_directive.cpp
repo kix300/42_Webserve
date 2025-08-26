@@ -204,7 +204,7 @@ void handleErrorPageDirective(const std::string &line, int line_number, Parsing_
 
 void handleClientMaxBodySizeDirective(const std::string &line, int line_number, Parsing_class &current_server)
 {
-	std::string size_str = trim(line.substr(20));
+	std::string size_str = trim(line.substr(23));
 	size_t semicolon = size_str.find(';');
 	if (semicolon != std::string::npos)
 	{
@@ -219,6 +219,7 @@ void handleClientMaxBodySizeDirective(const std::string &line, int line_number, 
 	char unit;
 	std::istringstream iss(size_str);
 	iss >> size;
+	
 	if (iss.peek() != EOF)
 	{
 		iss >> unit;

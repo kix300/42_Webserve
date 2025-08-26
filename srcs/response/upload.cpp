@@ -76,7 +76,6 @@ std::string extractFileName(const std::string& contentDisposition) {
 // Fonction principale pour gérer l'upload de fichier
 bool handleFileUpload(ClientData& client) {
 	std::string request = client.read_buff;
-	std::cout << request << std::endl;
 	
 	// Vérifier si c'est du multipart/form-data
 	if (!isMultipartFormData(request)) {

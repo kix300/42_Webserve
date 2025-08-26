@@ -35,7 +35,7 @@ void processServerBlockContent(const std::string &line, int line_number, Parsing
 		{
 			handleErrorPageDirective(line, line_number, current_server);
 		}
-		else if (line.compare(0, 20, "client_max_body_size") == 0 && (line[20] == ' ' || line[20] == '\t'))
+		else if (line.compare(0, 23, "client_body_buffer_size") == 0 && (line[23] == ' ' || line[23] == '\t'))
 		{
 			handleClientMaxBodySizeDirective(line, line_number, current_server);
 		}

@@ -50,7 +50,6 @@ void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& cli
 				close_client(epoll_fd, client_fd, server);
 				return;
 			}
-
 			if (client.read_buff.find("\r\n\r\n") != std::string::npos){
 				parsing_response(client);
 				prepare_response(client);

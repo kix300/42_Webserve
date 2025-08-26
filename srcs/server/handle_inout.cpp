@@ -39,19 +39,21 @@ bool handle_write(int client_fd, ClientData & client){
 
 bool handle_read(int client_fd, ClientData & client){
 	char buffer[BUFFER_SIZE];
-	ssize_t count = read(client_fd, buffer, BUFFER_SIZE);
-	if (count == -1){
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			return true;
+	while (true){
+		ssize_t count = read(client_fd, buffer, BUFFER_SIZE);
+		if (count == -1){
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				return true;
+			}
+			std::cout << "Error read" << std::endl;
+			return false;
 		}
-		std::cout << "Error read" << std::endl;
-		return false;
-	}
-	else if (count  == 0){
-		return false;
-	}
-	else{
-		client.read_buff.append(buffer, count);
+		else if (count  == 0){
+			return false;
+		}
+		else{
+			client.read_buff.append(buffer, count);
+		}
 	}
 	return (true);
 }
