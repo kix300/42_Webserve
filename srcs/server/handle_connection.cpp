@@ -130,7 +130,7 @@ int sendErrorResponse(ClientData& client, const std::string& e_mesg) {
                 "Connection: close\r\n"
                 "\r\n" +
                 file_content;
-            client.keep_alive = false; // Force la fermeture de la connexion
+            client.keep_alive = false;
             return 0;
         }
     }

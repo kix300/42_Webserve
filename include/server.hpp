@@ -116,7 +116,7 @@ void methode_post(ClientData& client);
 void methode_delete(ClientData& client);
 void check_location_methode(ClientData& client);
 
-// CGI functions
+// cgi.cpp 
 bool isCGIRequest(const std::string& path, const LocationData* location);
 std::string executeCGI(ClientData& client, const std::string& script_path, const LocationData* location);
 std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const std::string& script_path);

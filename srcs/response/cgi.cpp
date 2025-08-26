@@ -46,7 +46,6 @@ std::string getCGIInterpreter(const std::string& file_extension, const LocationD
 std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const std::string& script_path) {
 	std::map<std::string, std::string> env;
 
-	// Variables CGI obligatoires
 	env["REQUEST_METHOD"] = client.methode;
 	env["SCRIPT_NAME"] = client.path;
 	env["SCRIPT_FILENAME"] = script_path;
@@ -56,7 +55,6 @@ std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const
 	env["SERVER_SOFTWARE"] = "Webserve/1.0";
 	env["GATEWAY_INTERFACE"] = "CGI/1.1";
 
-	// Variables de requête
 	size_t query_pos = client.path.find('?');
 	if (query_pos != std::string::npos) {
 		env["QUERY_STRING"] = client.path.substr(query_pos + 1);
@@ -65,17 +63,14 @@ std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const
 		env["QUERY_STRING"] = "";
 	}
 
-	// Variables pour POST
 	if (client.methode == "POST") {
 		env["CONTENT_LENGTH"] = tostring(client.client_body.length());
 
-		// Extraire Content-Type depuis les headers de la requête
 		size_t content_type_pos = client.read_buff.find("Content-Type:");
 		if (content_type_pos != std::string::npos) {
 			size_t line_end = client.read_buff.find("\r\n", content_type_pos);
 			if (line_end != std::string::npos) {
 				std::string content_type_line = client.read_buff.substr(content_type_pos + 13, line_end - content_type_pos - 13);
-				// Trim whitespace
 				size_t start = content_type_line.find_first_not_of(" \t");
 				if (start != std::string::npos) {
 					env["CONTENT_TYPE"] = content_type_line.substr(start);
@@ -84,16 +79,13 @@ std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const
 		}
 	}
 
-	// Variables d'environnement système
-	env["PATH_INFO"] = "";
+	env["PATH_INFO"] = ""; // ici a voir jai mis "" par default mais a voir le sujet
 	env["PATH_TRANSLATED"] = "";
 	env["REMOTE_ADDR"] = "127.0.0.1";  // Pour localhost
 	env["REMOTE_HOST"] = "";
 	env["REMOTE_USER"] = "";
 	env["AUTH_TYPE"] = "";
 
-	// Headers HTTP comme variables d'environnement
-	// Convertir les headers HTTP en variables CGI (HTTP_*)
 	size_t header_start = client.read_buff.find("\r\n") + 2;
 	size_t header_end = client.read_buff.find("\r\n\r\n");
 
@@ -110,8 +102,6 @@ std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const
 				std::string header_name = line.substr(0, colon_pos);
 				std::string header_value = line.substr(colon_pos + 1);
 
-				// Nettoyer et convertir le nom du header
-				// Remplacer - par _ et convertir en majuscules
 				for (size_t i = 0; i < header_name.length(); ++i) {
 					if (header_name[i] == '-') {
 						header_name[i] = '_';
@@ -120,7 +110,6 @@ std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const
 					}
 				}
 
-				// Nettoyer la valeur
 				size_t value_start = header_value.find_first_not_of(" \t\r");
 				if (value_start != std::string::npos) {
 					header_value = header_value.substr(value_start);
@@ -138,15 +127,12 @@ std::map<std::string, std::string> buildCGIEnvironment(ClientData& client, const
 	return env;
 }
 
-// Exécute un script CGI et retourne la sortie
 std::string executeCGI(ClientData& client, const std::string& script_path, const LocationData* location) {
-	// Vérifier que le fichier existe
 	struct stat file_stat;
 	if (stat(script_path.c_str(), &file_stat) != 0) {
 		throw std::runtime_error("404 Not Found: CGI script not found");
 	}
 
-	// Obtenir l'extension et l'interpréteur
 	size_t dot_pos = script_path.find_last_of('.');
 	if (dot_pos == std::string::npos) {
 		throw std::runtime_error("500 Internal Server Error: No file extension");
@@ -159,17 +145,14 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 		throw std::runtime_error("500 Internal Server Error: No interpreter found for extension");
 	}
 	
-	// check si cle interpreter existe
 	if (stat(interpreter.c_str(), &file_stat) != 0)
 		throw std::runtime_error("500 Internal Server Error: No interpreter found for extension");
 
-	// Créer les pipes pour la communication
 	int pipe_in[2], pipe_out[2];
 	if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1) {
 		throw std::runtime_error("500 Internal Server Error: Failed to create pipes");
 	}
 
-	// Fork pour exécuter le script
 	pid_t pid = fork();
 	if (pid == -1) {
 		close(pipe_in[0]);
@@ -180,11 +163,9 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 	}
 
 	if (pid == 0) {
-		// Processus enfant
-		close(pipe_in[1]);   // Fermer écriture du pipe d'entrée
-		close(pipe_out[0]);  // Fermer lecture du pipe de sortie
+		close(pipe_in[1]);
+		close(pipe_out[0]);
 
-		// Rediriger stdin et stdout
 		dup2(pipe_in[0], STDIN_FILENO);
 		dup2(pipe_out[1], STDOUT_FILENO);
 
@@ -192,10 +173,8 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 		close(pipe_out[1]);
 
 
-		// Préparer l'environnement
 		std::map<std::string, std::string> cgi_env = buildCGIEnvironment(client, script_path);
 
-		// Convertir l'environnement en format char**
 		std::vector<std::string> env_strings;
 		std::vector<char*> env_ptrs;
 
@@ -208,25 +187,20 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 		}
 		env_ptrs.push_back(NULL);
 
-		// Préparer les arguments
 		char* args[] = {
 			const_cast<char*>(interpreter.c_str()),
 			const_cast<char*>(script_path.c_str()),
 			NULL
 		};
 
-		// Exécuter le script
 		execve(interpreter.c_str(), args, &env_ptrs[0]);
 
-		// Si on arrive ici, execve a échoué
 		std::cout << "Error execve" << std::endl;
 		exit(1);
 	} else {
-		// Processus parent
-		close(pipe_in[0]);   // Fermer lecture du pipe d'entrée
-		close(pipe_out[1]);  // Fermer écriture du pipe de sortie
+		close(pipe_in[0]);
+		close(pipe_out[1]);
 
-		// Envoyer le body de la requête au script (pour POST)
 		if (client.methode == "POST" && !client.client_body.empty()) {
 			ssize_t written = write(pipe_in[1], client.client_body.c_str(), client.client_body.length());
 			if (written == -1) {
@@ -235,11 +209,10 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 		}
 		close(pipe_in[1]);
 
-		// Lire la sortie du script avec timeout
 		std::string output;
 		char buffer[BUFFER_SIZE];
 		time_t start_time = time(NULL);
-		int timeout_seconds = 3; // Default timeout
+		int timeout_seconds = 3;
 		int status;
 
 		if (location && !location->cgi_timeout.empty()) {
@@ -261,7 +234,6 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 			}
 		}
 		
-		// Gérer le timeout
 		if (timed_out) {
 			kill(pid, SIGKILL);
 			waitpid(pid, &status, 0);
@@ -269,6 +241,7 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 			throw std::runtime_error("504 Gateway Timeout: CGI script exited with error");
 		}
 
+		// si cgi trop grand alors ff ca read que de tant de buffer faire comme handle read
 		ssize_t bytes_read;
 		while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer) - 1)) > 0) {
 			buffer[bytes_read] = '\0';
@@ -289,7 +262,6 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 bool parseCGIResponse(const std::string& cgi_output, std::string& headers, std::string& body) {
 	size_t header_end = cgi_output.find("\r\n\r\n");
 	if (header_end == std::string::npos) {
-		// Pas de séparation headers/body trouvée, traiter comme du contenu simple
 		headers = "";
 		body = cgi_output;
 		return false;
@@ -300,7 +272,6 @@ bool parseCGIResponse(const std::string& cgi_output, std::string& headers, std::
 	return true;
 }
 
-// Construit une réponse HTTP complète à partir de la sortie CGI
 void buildHTTPResponse(ClientData& client, const std::string& cgi_output) {
 	std::string cgi_headers, cgi_body;
 	bool has_headers = parseCGIResponse(cgi_output, cgi_headers, cgi_body);
@@ -311,27 +282,23 @@ void buildHTTPResponse(ClientData& client, const std::string& cgi_output) {
 	bool has_content_length = false;
 
 	if (has_headers && !cgi_headers.empty()) {
-		// Analyser les headers CGI
 		std::istringstream header_stream(cgi_headers);
 		std::string line;
 
 		while (std::getline(header_stream, line)) {
 			if (line.empty() || line == "\r") break;
 
-			// Nettoyer la ligne
 			if (!line.empty() && line[line.length() - 1] == '\r') {
 				line = line.substr(0, line.length() - 1);
 			}
 
 			if (line.empty()) continue;
 
-			// Vérifier les headers spéciaux
 			if (line.find("Content-Type:") == 0) {
 				has_content_type = true;
 			} else if (line.find("Content-Length:") == 0) {
 				has_content_length = true;
 			} else if (line.find("Status:") == 0) {
-				// Remplacer la ligne de statut HTTP
 				response = "HTTP/1.1 " + line.substr(8) + "\r\n";
 				continue;
 			}
@@ -340,7 +307,6 @@ void buildHTTPResponse(ClientData& client, const std::string& cgi_output) {
 		}
 	}
 
-	// Ajouter les headers manquants
 	if (!has_content_type) {
 		response += "Content-Type: text/html\r\n";
 	}
