@@ -55,13 +55,11 @@ ClientData &parsing_response(ClientData &client){
 		}
 	}
 
-	//ici si image alors classique on check la longeur du contenu 
 	if (content_length >= 0 && (long long)client.client_body.size() != content_length) {
 		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
 	}
 
 	long long size_to_check = (content_length >= 0) ? content_length : (long long)client.client_body.size();
-	// dans le cas ou c'est une image alors on sen fou Iguess. Non.
 	if (size_to_check > client.server->getClientMaxBodySize()) {
 		if (!(client.read_buff.find(".png") != std::string::npos)){
 			throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
@@ -246,7 +244,6 @@ std::string create_body(ClientData &client){
 
 
 	if (locationserver != NULL){
-		// std::string result = locationinserver(locationserver, client, full_path);
 		if (!locationserver->redirect.empty()) {
 			std::string val = trim(locationserver->redirect);
 			std::istringstream iss(val);
@@ -323,7 +320,6 @@ std::string create_body(ClientData &client){
 		if (stat(full_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
 			std::string index_path = findFirstIndexFile(client.server->getIndex(), full_path + "/");
 			if (index_path.empty()) {
-				// Pas d'autoindex au niveau serveur, donc on lève une exception
 				throw std::runtime_error("403 Forbidden: Directory listing disabled");
 			}
 			full_path = index_path;

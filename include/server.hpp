@@ -40,8 +40,6 @@
 
 #include "class/parsing_class.hpp"
 
-//possibilite de class surtout pour le parsing / conf file
-
 class Parsing_class;
 struct ClientData {
 	int fd;
@@ -68,8 +66,7 @@ struct LocationData {
 	bool autoindex;
 	std::string expires;
 	std::map<std::string, std::string> add_header;
-	// CGI support
-	std::map<std::string, std::string> cgi_extensions;  // extension -> interpreter path
+	std::map<std::string, std::string> cgi_extensions;
 	std::string cgi_timeout;
 
 	LocationData() : autoindex(false) {}

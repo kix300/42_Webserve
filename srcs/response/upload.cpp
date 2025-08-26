@@ -95,7 +95,6 @@ bool handleFileUpload(ClientData& client) {
 	}
 	
 	size_t end_pos = body.find(full_boundary, start_pos);
-	//quand c'est une image on n'as pas le dernier boundary
 	if (end_pos == std::string::npos) {
 		throw std::runtime_error("400 Bad Request: Incomplete multipart data");
 	}

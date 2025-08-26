@@ -76,7 +76,6 @@ void methode_post(ClientData& client){
 	if (client.write_buff.size() == 0)
 	{
 		if (isMultipartFormData(client.read_buff)) {
-			//ici gerer les uplaod d'image 
 			if (handleFileUpload(client)) {
 				std::string body_content = client.client_body;
 				size_t headers_end = body_content.find("\r\n\r\n");

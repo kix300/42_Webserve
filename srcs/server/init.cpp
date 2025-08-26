@@ -72,7 +72,7 @@ void run_server(int epoll_fd, std::map<int, Parsing_class> serverMap){
 	struct epoll_event events[MAX_EVENTS];
 
 	while (!g_stop_server) {
-		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, 1000); //gerer timeout
+		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, 1000);
 		if (nfds == -1) {
 			if (errno == EINTR) {
 				continue;

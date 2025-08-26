@@ -55,7 +55,7 @@ void Parsing_class::clear(){
 		close(_server_fd);
 	_server_fd = 0;
 	_server_id = 0;
-	_client_max_body_size = 128 * 1024; // ici chnager le body en fonction du fichier
+	_client_max_body_size = 128 * 1024;
 	_error = false;
 	_index = "default";
 	_error_pages.clear();

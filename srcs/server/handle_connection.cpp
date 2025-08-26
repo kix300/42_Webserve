@@ -77,7 +77,6 @@ void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& cli
 				return;
 			}
 
-			//Plus de EPOLLIN Donc a voir les form
 			struct epoll_event ev;
 			ev.events = EPOLLOUT | EPOLLET;
 			ev.data.fd = client_fd;
