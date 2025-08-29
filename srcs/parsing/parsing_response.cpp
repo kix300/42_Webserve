@@ -37,7 +37,7 @@ ClientData &parsing_response(ClientData &client){
 		content_length_pos = headers.find("content-length:");
 	}
 
-	long long content_length = -1;
+	long content_length = -1;
 	if (content_length_pos != std::string::npos) {
 		size_t value_start = headers.find(':', content_length_pos) + 1;
 		size_t value_end = headers.find('\r', value_start);
@@ -55,11 +55,11 @@ ClientData &parsing_response(ClientData &client){
 		}
 	}
 
-	if (content_length >= 0 && (long long)client.client_body.size() != content_length) {
+	if (content_length >= 0 && (long)client.client_body.size() != content_length) {
 		throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
 	}
 
-	long long size_to_check = (content_length >= 0) ? content_length : (long long)client.client_body.size();
+	long size_to_check = (content_length >= 0) ? content_length : (long)client.client_body.size();
 	if (size_to_check > client.server->getClientMaxBodySize()) {
 		if (!(client.read_buff.find(".png") != std::string::npos)){
 			throw std::runtime_error("413 Payload Too Large: Request body size exceeds limit");
@@ -91,7 +91,7 @@ ClientData &parsing_response(ClientData &client){
 	client.methode = method;
 	client.path = path;
 	return client;
-};
+}
 
 
 static std::string reason_phrase(int code) {

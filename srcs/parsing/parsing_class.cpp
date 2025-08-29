@@ -85,7 +85,7 @@ void Parsing_class::setErrorPage(int error_code, const std::string& page) {
     _error_pages[error_code] = page;
 }
 
-void Parsing_class::setClientMaxBodySize(long long size) {
+void Parsing_class::setClientMaxBodySize(long size) {
     _client_max_body_size = size;
 }
 
@@ -120,7 +120,7 @@ std::string Parsing_class::getErrorPage(int error_code){
     return (it->second);
 }
 
-long long Parsing_class::getClientMaxBodySize() const {
+long Parsing_class::getClientMaxBodySize() const {
     return _client_max_body_size;
 }
 

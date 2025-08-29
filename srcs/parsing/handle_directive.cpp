@@ -215,7 +215,7 @@ void handleClientMaxBodySizeDirective(const std::string &line, int line_number, 
 		throw std::runtime_error("Missing ';' at end of client_max_body_size directive (line " + tostring(line_number) + ")");
 	}
 
-	long long size;
+	long size;
 	char unit;
 	std::istringstream iss(size_str);
 	iss >> size;
