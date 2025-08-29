@@ -58,16 +58,17 @@ struct LocationData {
 	std::string path;
 	std::string root;
 	std::string index;
-	std::string fastcgi_pass;
-	std::vector<std::string> limit_except;
-	std::vector<std::string> try_files;
 	std::string redirect;
 	std::vector<std::string> allowed_methods;
 	bool autoindex;
-	std::string expires;
-	std::map<std::string, std::string> add_header;
 	std::map<std::string, std::string> cgi_extensions;
 	std::string cgi_timeout;
+
+	std::string expires;
+	std::string fastcgi_pass;
+	std::vector<std::string> limit_except;
+	std::vector<std::string> try_files;
+	std::map<std::string, std::string> add_header;
 
 	LocationData() : autoindex(false) {}
 };

@@ -19,6 +19,7 @@
 ClientData &parsing_response(ClientData &client){
 
 	std::string request(client.read_buff);
+	std::cout << request << std::endl;
     std::string method, path, http;
 
 	if (request.empty()) {
@@ -231,13 +232,13 @@ std::string create_body(ClientData &client){
 	LocationData *locationserver = client.server->getLocation(client.path);
 
 	if (locationserver != NULL && !locationserver->root.empty()) {
-		full_path = locationserver->root + client.path;	
+		full_path = locationserver->root + client.path;
 	} else {
 		full_path = client.server->getRoot() + client.path;
 	}
 
-	if (client.path == "/")
-		full_path = client.server->findFirstIndexFile();
+	// if (client.path == "/")
+	// 	full_path = client.server->findFirstIndexFile();
 	if (locationserver != NULL && isCGIRequest(client.path, locationserver)) {
 		return executeCGI(client, full_path, locationserver);
 	}
