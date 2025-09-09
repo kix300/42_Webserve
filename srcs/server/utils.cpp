@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 11:04:36 by kduroux           #+#    #+#             */
-/*   Updated: 2025/07/07 11:08:06 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/09/09 11:53:30 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,26 @@ std::map<std::string, std::string> parseFormData(const std::string& body) {
 }
 
 std::string generateDirectoryListing(const std::string& directory_path, const std::string& request_path) {
+	struct stat path_stat;
+	if (stat(directory_path.c_str(), &path_stat) == 0) {
+		if (S_ISREG(path_stat.st_mode)) {
+			std::ifstream file(directory_path.c_str(), std::ios::binary);
+			if (!file.is_open()) {
+				throw std::runtime_error("404 Not Found: Could not open file");
+			}
+			
+			std::string content;
+			file.seekg(0, std::ios::end);
+			content.reserve(file.tellg());
+			file.seekg(0, std::ios::beg);
+			
+			content.assign((std::istreambuf_iterator<char>(file)),
+						   std::istreambuf_iterator<char>());
+			file.close();
+			
+			return content;
+		}
+	}
 	DIR* dir = opendir(directory_path.c_str());
 	if (!dir) {
 		throw std::runtime_error("403 Forbidden: Cannot access directory");

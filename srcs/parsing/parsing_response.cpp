@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 10:40:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/22 14:30:32 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/09/09 11:46:55 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,6 @@
 ClientData &parsing_response(ClientData &client){
 
 	std::string request(client.read_buff);
-	std::cout << request << std::endl;
     std::string method, path, http;
 
 	if (request.empty()) {
@@ -138,78 +137,80 @@ std::string combinePaths(const std::string& root, const std::string& path) {
 }
 
 // locationinserver : on  parse la location pour trouver si redirection, cgi, etc on return un path
-std::string locationinserver(LocationData *locationserver, ClientData client, std::string full_path){
-	if (!locationserver->redirect.empty()) {
-		std::string val = trim(locationserver->redirect);
-		std::istringstream iss(val);
-		std::string first;
-		iss >> first;
-		int code = 302;
-		std::string rest;
-		std::getline(iss, rest);
-		rest = trim(rest);
+// std::string locationinserver(LocationData *locationserver, ClientData client, std::string full_path){
+// 	if (!locationserver->redirect.empty()) {
+// 		std::string val = trim(locationserver->redirect);
+// 		std::istringstream iss(val);
+// 		std::string first;
+// 		iss >> first;
+// 		int code = 302;
+// 		std::string rest;
+// 		std::getline(iss, rest);
+// 		rest = trim(rest);
 
-		bool numeric = true;
-		if (first.empty()) numeric = false;
-		for (size_t i = 0; i < first.size(); ++i) {
-			if (!std::isdigit(static_cast<unsigned char>(first[i]))) { numeric = false; break; }
-		}
-		if (numeric) {
-			code = std::atoi(first.c_str());
-		} else {
-			rest = val;
-		}
+// 		bool numeric = true;
+// 		if (first.empty()) numeric = false;
+// 		for (size_t i = 0; i < first.size(); ++i) {
+// 			if (!std::isdigit(static_cast<unsigned char>(first[i]))) { numeric = false; break; }
+// 		}
+// 		if (numeric) {
+// 			code = std::atoi(first.c_str());
+// 		} else {
+// 			rest = val;
+// 		}
 
-		if (code == 200) {
-			const std::string body = rest;
-			client.write_buff =
-				"HTTP/1.1 200 OK\r\n"
-				"Content-Type: text/plain\r\n"
-				"Content-Length: " + tostring(body.size()) + "\r\n"
-				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n" +
-				body;
-			return "";
-		}
+// 		if (code == 200) {
+// 			const std::string body = rest;
+// 			client.write_buff =
+// 				"HTTP/1.1 200 OK\r\n"
+// 				"Content-Type: text/plain\r\n"
+// 				"Content-Length: " + tostring(body.size()) + "\r\n"
+// 				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n" +
+// 				body;
+// 			return "";
+// 		}
 
-		if (code >= 300 && code < 400) {
-			const std::string target = rest;
-			client.write_buff =
-				"HTTP/1.1 " + tostring(code) + " " + reason_phrase(code) + "\r\n"
-				"Location: " + target + "\r\n"
-				"Content-Length: 0\r\n"
-				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
-			if(DEBUG)
-				std::cout << client.write_buff << std::endl;
-			return "";
-		}
+// 		if (code >= 300 && code < 400) {
+// 			const std::string target = rest;
+// 			client.write_buff =
+// 				"HTTP/1.1 " + tostring(code) + " " + reason_phrase(code) + "\r\n"
+// 				"Location: " + target + "\r\n"
+// 				"Content-Length: 0\r\n"
+// 				"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
+// 			if(DEBUG)
+// 				std::cout << client.write_buff << std::endl;
+// 			return "";
+// 		}
 
-		const std::string target = rest.empty() ? first : rest;
-		client.write_buff =
-			"HTTP/1.1 302 Found\r\n"
-			"Location: " + target + "\r\n"
-			"Content-Length: 0\r\n"
-			"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
-		return "";
-	}
-	full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
+// 		const std::string target = rest.empty() ? first : rest;
+// 		client.write_buff =
+// 			"HTTP/1.1 302 Found\r\n"
+// 			"Location: " + target + "\r\n"
+// 			"Content-Length: 0\r\n"
+// 			"Connection: " + std::string(client.keep_alive ? "keep-alive" : "close") + "\r\n\r\n";
+// 		return "";
+// 	}
+// 	full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
 
-	if (full_path.empty()) {
-		std::string directory_path = combinePaths(locationserver->root, locationserver->path);
-		struct stat dir_stat;
-		if (stat(directory_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
-			if (locationserver->autoindex) {
-				std::string body = generateDirectoryListing(directory_path, client.path);
-				return body;
-			} else {
-				throw std::runtime_error("403 Forbidden: Directory listing disabled");
-			}
-		} else {
-			throw std::runtime_error("404 Not Found: No index file found");
-		}
-	}
+// 	if (full_path.empty()) {
+// 		std::cout << " client " << client.path << std::endl;	
+// 		std::cout << " location " << locationserver->path << std::endl;	
+// 		std::string directory_path = combinePaths(locationserver->root, client.path);
+// 		struct stat dir_stat;
+// 		if (stat(directory_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+// 			if (locationserver->autoindex) {
+// 				std::string body = generateDirectoryListing(directory_path, client.path);
+// 				return body;
+// 			} else {
+// 				throw std::runtime_error("403 Forbidden: Directory listing disabled");
+// 			}
+// 		} else {
+// 			throw std::runtime_error("404 Not Found: No index file found");
+// 		}
+// 	}
 
-	return full_path;
-}
+// 	return full_path;
+// }
 
 
 //dans create body, je doit regarder si le root existe, si le path de la methode existe dans root ou dans une location
@@ -298,16 +299,17 @@ std::string create_body(ClientData &client){
 		full_path = findFirstIndexFile(locationserver->index, combinePaths(locationserver->root, locationserver->path));
 
 		if (full_path.empty()) {
-			std::string directory_path = combinePaths(locationserver->root, locationserver->path);
+			std::string directory_path = combinePaths(locationserver->root, client.path);
 			struct stat dir_stat;
-			if (stat(directory_path.c_str(), &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+			if (stat(directory_path.c_str(), &dir_stat) == 0){ // && S_ISDIR(dir_stat.st_mode)) {
 				if (locationserver->autoindex) {
 					std::string body = generateDirectoryListing(directory_path, client.path);
 					return body;
 				} else {
 					throw std::runtime_error("403 Forbidden: Directory listing disabled");
 				}
-			} else {
+			} 
+			else {
 				throw std::runtime_error("404 Not Found: No index file found");
 			}
 		}
