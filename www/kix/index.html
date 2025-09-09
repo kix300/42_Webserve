@@ -5,9 +5,57 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>HALLLLLLLLO</title>
 		<!-- <link href="css/style.css" rel="stylesheet"> -->
+
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				max-width: 800px;
+				margin: 0 auto;
+				padding: 20px;
+				background-color: #f5f5f5;
+			}
+			.container {
+				background-color: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+				margin-bottom: 20px;
+			}
+        	.card {
+        	    background: white;
+            	border-radius: 8px;
+            	padding: 1.5rem;
+            	margin-bottom: 2rem;
+            	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            	transition: transform 0.3s ease;
+       		}
+        
+        .btn {
+            display: inline-block;
+            background: #6e8efb;
+            color: white;
+            padding: 0.7rem 1.5rem;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: background 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #5a7bf0;
+        }
+	</style>
 	</head>
 	<body>
 		<p>HALLLLLLLLO</p>
-	
+		<div class="card">
+			<h2>Mes Test</h2>
+			<p>Test des different site</p>
+			<a href="http://127.0.0.1:8080/" class="btn">Home</a>
+			<a href="http://127.0.0.1:8080/test3/" class="btn">Test de redirection server</a>
+			<a href="http://127.0.0.1:8080/files/" class="btn">Test de autoindex</a>
+			<a href="http://127.0.0.1:8080/cgi/form.py" class="btn">Test du formulaire cgi</a>
+			<a href="http://127.0.0.1:8080/cgi/timeout.py" class="btn">Test de timeout cgi</a>
+		</div>
 	</body>
+				
 </html>
