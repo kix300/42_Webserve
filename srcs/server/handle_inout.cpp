@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 12:04:16 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 13:11:50 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/09/11 11:24:59 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,15 +19,14 @@
 
 bool handle_write(int client_fd, ClientData & client){
 
+	if (client_fd < 0) {
+		return false;
+	}
 	if (client.write_buff.empty())
 		return (true);
 	ssize_t count = write(client_fd, client.write_buff.data(), client.write_buff.size());
 	if (count == -1){
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
 			return true;
-		}
-		std::cout << "Error write" << std::endl;
-		return false;
 	}
 	else{
 		client.write_buff.erase(0, count);
@@ -39,21 +38,21 @@ bool handle_write(int client_fd, ClientData & client){
 
 bool handle_read(int client_fd, ClientData & client){
 	char buffer[BUFFER_SIZE];
-	while (true){
-		ssize_t count = read(client_fd, buffer, BUFFER_SIZE);
-		if (count == -1){
-			if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				return true;
-			}
-			std::cout << "Error read" << std::endl;
-			return false;
-		}
-		else if (count  == 0){
-			return false;
-		}
-		else{
-			client.read_buff.append(buffer, count);
-		}
+	
+	if (client_fd < 0) {
+		return false;
 	}
-	return (true);
+	
+	ssize_t count = read(client_fd, buffer, BUFFER_SIZE);
+	if (count == -1){
+		return true;
+	}
+	else if (count == 0){
+		return false;
+	}
+	else{
+		client.read_buff.append(buffer, count);
+	}
+	
+	return true;
 }

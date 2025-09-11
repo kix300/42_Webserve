@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 16:34:17 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 13:11:34 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/09/11 13:24:17 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,9 @@ int create_server_socket(const int port){
 	if (server_fd == -1){
 		throw std::runtime_error("socket() failed: " + std::string(strerror(errno)));
 	}
+
+	// CORRECTION : Ajouter FD_CLOEXEC pour que le socket se ferme lors d'execve()
+	fcntl(server_fd, F_SETFD, FD_CLOEXEC);
 
 	int opt = 1;
 	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))){
@@ -53,6 +56,9 @@ int setup_epoll(std::map<int, Parsing_class> serverMap){
 	if (epoll_fd == -1) {
 		throw std::runtime_error("epoll_create1() failed: " + std::string(strerror(errno)));
 	}
+
+	// CORRECTION : Ajouter FD_CLOEXEC pour que l'epoll se ferme lors d'execve()
+	fcntl(epoll_fd, F_SETFD, FD_CLOEXEC);
 
 	struct epoll_event event;
 	

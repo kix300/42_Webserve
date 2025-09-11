@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/04 17:24:20 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/11 13:18:30 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/09/11 11:57:26 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,8 +51,14 @@ void handle_client_event(int epoll_fd, const epoll_event& event, ClientData& cli
 				return;
 			}
 			if (client.read_buff.find("\r\n\r\n") != std::string::npos){
+				if (CORRECTION){
+					std::cout << "-----------------request------------------\n" << client.read_buff << "\n-------------------------------------------\n" << std::endl;
+				}
 				parsing_response(client);
 				prepare_response(client);
+				if (CORRECTION){
+					std::cout << "-----------------response------------------\n" << client.write_buff << "\n-----------------------------------------\n" << std::endl;
+				}
 
 				struct epoll_event ev;
 				ev.events = EPOLLIN | EPOLLOUT | EPOLLET;

@@ -6,7 +6,7 @@
 /*   By: kduroux <kduroux@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/20 10:00:00 by kduroux           #+#    #+#             */
-/*   Updated: 2025/08/22 14:23:27 by kduroux          ###   ########.fr       */
+/*   Updated: 2025/09/11 13:24:16 by kduroux          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,15 +163,29 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 	}
 
 	if (pid == 0) {
+		// Fermer les pipes parents
 		close(pipe_in[1]);
 		close(pipe_out[0]);
 
+		// Rediriger stdin/stdout
 		dup2(pipe_in[0], STDIN_FILENO);
 		dup2(pipe_out[1], STDOUT_FILENO);
 
+		// Fermer les pipes enfant après redirection
 		close(pipe_in[0]);
 		close(pipe_out[1]);
 
+		// CORRECTION : Fermer tous les FDs hérités du serveur
+		// Fermer epoll_fd et server sockets
+		close(client.epoll_fd);
+		
+		// Fermer tous les server sockets (parcourir la map des serveurs)
+		// On ferme les FDs 3 et 4 qui sont les server sockets d'après valgrind
+		for (int fd = 3; fd < 10; fd++) {
+			if (fd != STDIN_FILENO && fd != STDOUT_FILENO && fd != STDERR_FILENO) {
+				close(fd); // Ignore les erreurs, certains FDs peuvent déjà être fermés
+			}
+		}
 
 		std::map<std::string, std::string> cgi_env = buildCGIEnvironment(client, script_path);
 
@@ -204,7 +218,7 @@ std::string executeCGI(ClientData& client, const std::string& script_path, const
 		if (client.methode == "POST" && !client.client_body.empty()) {
 			ssize_t written = write(pipe_in[1], client.client_body.c_str(), client.client_body.length());
 			if (written == -1) {
-				std::cout << "Error write" << std::endl;
+				throw std::runtime_error("Write error !");
 			}
 		}
 		close(pipe_in[1]);
