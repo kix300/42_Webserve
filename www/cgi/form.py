@@ -66,6 +66,7 @@ def main():
     print("        <a href='/test3/' class='btn'>Test de redirection serveur</a>")
     print("        <a href='/files/' class='btn'>Test de autoindex</a>")
     print("        <a href='/cgi/timeout.py' class='btn'>Test de timeout CGI</a>")
+    print("        <a href='/cgi/simple.php' class='btn'>Test de timeout CGI</a>")
     print("    </div>")
     
     # Traitement des données reçues
