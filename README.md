@@ -106,4 +106,4 @@ server {
 
 ## Auteurs
 
-*   **ozen** - *(merci de compléter avec votre nom/login)*
+*   **ozen** - *(kduroux)*
